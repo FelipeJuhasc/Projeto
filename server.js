@@ -7,14 +7,21 @@ const app = express();
 app.use(cors());
 app.use(express.json()); // Allows server to read JSON bodies
 // Permite que o Express sirva a index.html e as pastas 'view' e 'controller' automaticamente
-// Faz com que os arquivos HTML dentro da pasta view fiquem acessíveis de forma limpa
-app.use('/view', express.static('view'));
+const path = require('path'); // Adicione esta linha no topo do arquivo junto com os outros require
 
-// Define especificamente que o arquivo index.html na raiz será a página inicial do site
+// ... mantenha as configurações de cors, express.json e banco.js normais ...
+
+// 1. Libera acesso público para as subpastas e arquivos essenciais
+app.use(express.static(__dirname)); 
+app.use('/view', express.static(path.join(__dirname, 'view')));
+app.use('/controller', express.static(path.join(__dirname, 'controller')));
+
+// 2. Define explicitamente que a página inicial será o index.html da raiz
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// ... IMPORTANTE: Deixe as rotas de API (app.post('/api/login'), app.get('/api/usuarios'), etc.) ABAIXO deste bloco estático ...
 
 
 // 1. Connect to MongoDB right away
