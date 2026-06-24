@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuários</title>
+    <link rel="stylesheet" href="../index.css">
+    <script src="./controleAcesso.js"></script>
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { display: flex; min-height: 100vh; background: #f4f6f8; }
+
+        .content { flex: 1; padding: 30px; }
+        .content h1 { margin-bottom: 20px; color: #2c3e50; }
+        .content-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,.1);
+        }
+
+        .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+        .toolbar input[type="text"] {
+            flex: 1;
+            min-width: 180px;
+            padding: 8px 12px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            outline: none;
+        }
+        .toolbar input:focus { border-color: #2196F3; }
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .btn {
+            padding: 8px 14px;
+            font-size: 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .btn-novo     { background: #4CAF50; color: white; }
+        .btn-editar   { background: #2196F3; color: white; }
+        .btn-excluir  { background: #f44336; color: white; }
+        .btn-exportar { background: #FF9800; color: white; }
+        .btn:hover    { opacity: .88; }
+        .btn:disabled { background: #ccc; color: #888; cursor: not-allowed; opacity: .7; }
+
+        .usuario-item {
+            padding: 12px 14px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            border-radius: 4px;
+            border-left: 3px solid transparent;
+            transition: background .15s;
+        }
+        .usuario-item:hover       { background: #f5f5f5; }
+        .usuario-item.selecionado { background: #e8f0fe; border-left-color: #2196F3; }
+        .usuario-item strong      { font-size: 15px; color: #333; }
+        .usuario-item small       { color: #777; font-size: 13px; }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 6px;
+        }
+        .badge-adm    { background: #fde8e8; color: #c0392b; }
+        .badge-edicao { background: #e8f4fd; color: #1a6fa8; }
+        .badge-visao  { background: #e8fdf0; color: #1a7a42; }
+
+        .lista-vazia { color: #999; text-align: center; padding: 30px; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar" id="sidebar">
+        <h2 style="color: white; padding: 20px;">Unoeste</h2>
+        <ul>
+            <li><a href="./professor.html"   class="menu-item"><span>Professor</span></a></li>
+            <li><a href="./cursoView.html"   class="menu-item"><span>Cursos</span></a></li>
+            <li><a href="./listaview.html"   class="menu-item"><span>Disciplina</span></a></li>
+            <li><a href="./usuarioView.html" class="menu-item"><span>Usuários</span></a></li>
+
+            <li ><a href="#" class="menu-item" onclick="logout()"><span>🚪 Sair (Logout)</span></a></li>
+
+        </ul>
+    </div>
+
+    <div class="content">
+        <h1>Lista de Usuários</h1>
+        <div class="content-section">
+            <div class="toolbar">
+                <input type="text" id="search-input"
+                       placeholder="Buscar usuário pelo login..."
+                       oninput="filtrarUsuarios()" />
+                <div class="btn-group">
+                    <button class="btn btn-novo"     onclick="novoUsuario()">+ Novo</button>
+                    <button class="btn btn-editar"   onclick="editarUsuario()"  id="btn-editar"  disabled>Editar</button>
+                    <button class="btn btn-excluir"  onclick="excluirUsuario()" id="btn-excluir" disabled>Excluir</button>
+                    <button class="btn btn-exportar" onclick="exportarTXT()">⬇ Exportar TXT</button>
+                </div>
+            </div>
+            <div id="usuario-list"></div>
+        </div>
+    </div>
+
+    <!-- MODAL DE FORMULÁRIO PARA USUÁRIO -->
+    <div id="usuario-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 25px; border-radius: 8px; width: 100%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+          <h2 id="modal-title" style="margin-bottom: 20px; color: #2c3e50;">Adicionar Usuário</h2>
+        
+         <div style="margin-bottom: 15px;">
+              <label style="display: block; margin-bottom: 5px; font-weight: 500;">Login:</label>
+             <input type="text" id="modal-login" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Ex: carlos.silva" required>
+         </div>
+
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Senha:</label>
+            <input type="password" id="modal-senha" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Mínimo 4 caracteres" required>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Permissão de Acesso:</label>
+            <select id="modal-permissao" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <option value="visao">Visão (Apenas Leitura)</option>
+                <option value="edicao">Edição (Não adiciona/exclui)</option>
+                <option value="adm">Administrador (Acesso Total)</option>
+            </select>
+        </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+             <button class="btn" style="background: #e0e0e0; color: #333;" onclick="fecharModal()">Cancelar</button>
+             <button class="btn btn-novo" id="btn-salvar-modal" onclick="salvarFormularioModal()">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 1) ROUTER (Updated to support async operations) -->
+    <script>
+        class Router {
+            constructor() { this._rotas = {}; }
+            registrar(rota, fn) { this._rotas[rota] = fn; }
+            async enviar(rota, dados) {
+                const fn = this._rotas[rota];
+                if (!fn) { console.error('[Router] Rota não encontrada:', rota); return null; }
+                return await fn(dados);
+            }
+        }
+        window.router = new Router();
+    </script>
+
+    <!-- 2) MODEL -->
+    <script>
+        const PERMISSOES_VALIDAS = ['visao', 'edicao', 'adm'];
+
+        class Usuario {
+            constructor(id, login, senha, permissao) {
+                this._id        = id;
+                this._login     = login;
+                this._senha     = senha;
+                this._permissao = permissao;
+            }
+            get id()        { return this._id; }
+            get login()     { return this._login; }
+            get senha()     { return this._senha; }
+            get permissao() { return this._permissao; }
+
+            set login(v)     { if (v && v.trim().length > 1) this._login = v.trim(); }
+            set senha(v)     { if (v && v.trim().length >= 4) this._senha = v.trim(); }
+            set permissao(v) {
+                const n = v ? v.trim().toLowerCase() : '';
+                if (PERMISSOES_VALIDAS.includes(n)) this._permissao = n;
+                else console.error('[Usuario] Permissão inválida:', v);
+            }
+        }
+        window.Usuario = Usuario;
+    </script>
+
+    <!-- 3) CONTROLLER (Updated to call your Node.js Backend instead of using local memory lists) -->
+    <script>
+        class UsuarioController {
+            constructor() {
+                this._apiUrl = 'http://localhost:3000/api/usuarios';
+                this._registrarRotas();
+            }
+
+            _registrarRotas() {
+                router.registrar('usuario/listar',      async (termo)   => await this.getAll(termo));
+                router.registrar('usuario/buscarPorId', async (id)      => await this.buscarPorId(id));
+                router.registrar('usuario/adicionar',   async (dados)   => await this.adicionar(dados));
+                router.registrar('usuario/atualizar',   async (payload) => await this.atualizar(payload.id, payload.dados));
+                router.registrar('usuario/excluir',     async (id)      => await this.excluir(id));
+            }
+
+            async getAll(termo = '') {
+                try {
+                    const url = termo ? `${this._apiUrl}?termo=${termo}` : this._apiUrl;
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    return data.map(u => new Usuario(u._id, u.login, u.senha, u.permissao));
+                } catch (err) {
+                    console.error('Erro ao buscar usuários do banco:', err);
+                    return [];
+                }
+            }
+
+            async buscarPorId(id) {
+                try {
+                    const res = await fetch(`${this._apiUrl}/${id}`);
+                    const u = await res.json();
+                    return u ? new Usuario(u._id, u.login, u.senha, u.permissao) : null;
+                } catch (err) {
+                    console.error('Erro ao buscar por ID:', err);
+                    return null;
+                }
+            }
+
+            async adicionar({ login, senha, permissao }) {
+                try {
+                    const res = await fetch(this._apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ login, senha, permissao })
+                    });
+                    const u = await res.json();
+                    return new Usuario(u._id, u.login, u.senha, u.permissao);
+                } catch (err) {
+                    console.error('Erro ao adicionar usuário:', err);
+                    return null;
+                }
+            }
+
+            async atualizar(id, dados) {
+                try {
+                    const res = await fetch(`${this._apiUrl}/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(dados)
+                    });
+                    return res.ok;
+                } catch (err) {
+                    console.error('Erro ao atualizar usuário:', err);
+                    return false;
+                }
+            }
+
+            async excluir(id) {
+                try {
+                    const res = await fetch(`${this._apiUrl}/${id}`, {
+                        method: 'DELETE'
+                    });
+                    return res.ok;
+                } catch (err) {
+                    console.error('Erro ao excluir usuário:', err);
+                    return false;
+                }
+            }
+        }
+        window.usuarioController = new UsuarioController();
+    </script>
+
+    <!-- 4) VIEW (Asynchronous interface renderer) -->
+    <script>
+                // ==========================================
+        // 4) VIEW COM CONTROLE DE MODAL PARA USUÁRIOS
+        // ==========================================
+        let selecionadoId = null;
+        let modoModal = 'adicionar'; // Controla se é 'adicionar' ou 'editar'
+
+        const BADGE = {
+            adm:    '<span class="badge badge-adm">ADM</span>',
+            edicao: '<span class="badge badge-edicao">Edição</span>',
+            visao:  '<span class="badge badge-visao">Visão</span>'
+        };
+
+        async function renderizarLista(termo = '') {
+            const container = document.getElementById('usuario-list');
+            const usuarios = await router.enviar('usuario/listar', termo);
+
+            if (!usuarios || usuarios.length === 0) {
+                container.innerHTML = '<div class="lista-vazia">Nenhum usuário encontrado.</div>';
+                desmarcarSelecao();
+                return;
+            }
+
+            let html = '';
+            usuarios.forEach(u => {
+                const classeSel = (u.id === selecionadoId) ? 'selecionado' : '';
+                html += `
+                    <div class="usuario-item ${classeSel}" onclick="selecionarUsuario('${u.id}')">
+                        <strong>${u.login}</strong> ${BADGE[u.permissao] || ''}
+                        <br><small>ID: ${u.id}</small>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            atualizarBotoes();
+        }
+
+        function selecionarUsuario(id) {
+            selecionadoId = (selecionadoId === id) ? null : id;
+            
+            const itens = document.querySelectorAll('.usuario-item');
+            itens.forEach(item => {
+                if (item.innerHTML.includes(`ID: ${id}`) && selecionadoId !== null) {
+                    item.classList.add('selecionado');
+                } else {
+                    item.classList.remove('selecionado');
+                }
+            });
+
+            atualizarBotoes();
+        }
+
+        function desmarcarSelecao() {
+            selecionadoId = null;
+            atualizarBotoes();
+        }
+
+        function atualizarBotoes() {
+            const btnEditar = document.getElementById('btn-editar');
+            const btnExcluir = document.getElementById('btn-excluir');
+            const ativo = (selecionadoId !== null);
+            
+            btnEditar.disabled = !ativo;
+            btnExcluir.disabled = !ativo;
+        }
+
+        async function filtrarUsuarios() {
+            const termo = document.getElementById('search-input').value;
+            await renderizarLista(termo);
+        }
+
+        // --- FUNÇÕES DE CONTROLE DO MODAL ---
+        function abrirModal(modo) {
+            modoModal = modo;
+            document.getElementById('usuario-modal').style.display = 'flex';
+        }
+
+        function fecharModal() {
+            document.getElementById('usuario-modal').style.display = 'none';
+            // Limpa os campos após fechar
+            document.getElementById('modal-login').value = '';
+            document.getElementById('modal-senha').value = '';
+            document.getElementById('modal-permissao').value = 'visao';
+        }
+
+        function novoUsuario() {
+            const permissao = localStorage.getItem('usuarioPermissao');
+            if (permissao === 'visao' || permissao === 'edicao') {
+                alert('Seu nível de acesso não permite adicionar usuários.');
+                return;
+            }
+            document.getElementById('modal-title').innerText = "Adicionar Usuário";
+            abrirModal('adicionar');
+        }
+
+        async function editarUsuario() {
+            const permissao = localStorage.getItem('usuarioPermissao');
+            if (permissao === 'visao' || permissao === 'edicao') {
+                alert('Seu nível de acesso não permite editar usuários.');
+                return;
+            }
+            if (!selecionadoId) return;
+
+            const u = await router.enviar('usuario/buscarPorId', selecionadoId);
+            if (!u) return;
+
+            // Preenche o modal com os dados atuais do banco de dados
+            document.getElementById('modal-title').innerText = "Editar Usuário";
+            document.getElementById('modal-login').value = u.login;
+            document.getElementById('modal-senha').value = u.senha;
+            document.getElementById('modal-permissao').value = u.permissao;
+
+            abrirModal('editar');
+        }
+
+        async function salvarFormularioModal() {
+            const login = document.getElementById('modal-login').value.trim();
+            const senha = document.getElementById('modal-senha').value.trim();
+            const permissao = document.getElementById('modal-permissao').value;
+
+            // Validações básicas do frontend baseadas nas regras da classe Usuario
+            if (login.length <= 1) {
+                alert('O login deve conter mais de 1 caractere.');
+                return;
+            }
+            if (senha.length < 4) {
+                alert('A senha deve conter ao menos 4 caracteres.');
+                return;
+            }
+
+            if (modoModal === 'adicionar') {
+                const novo = await router.enviar('usuario/adicionar', { login, senha, permissao });
+                if (novo) alert(`Usuário "${novo.login}" adicionado com sucesso!`);
+            } else if (modoModal === 'editar') {
+                await router.enviar('usuario/atualizar', {
+                    id: selecionadoId,
+                    dados: { login, senha, permissao }
+                });
+            }
+
+            fecharModal();
+            await renderizarLista();
+        }
+
+        async function excluirUsuario() {
+            if (!selecionadoId) return;
+            const permissao = localStorage.getItem('usuarioPermissao');
+            if (permissao === 'visao' || permissao === 'edicao') {
+                alert('Seu nível de acesso não permite excluir usuários.');
+                return;
+            }
+
+            const u = await router.enviar('usuario/buscarPorId', selecionadoId);
+            if (!u) return;
+
+            if (confirm(`Tem certeza que deseja excluir o usuário "${u.login}"?`)) {
+                await router.enviar('usuario/excluir', selecionadoId);
+                desmarcarSelecao();
+                await renderizarLista();
+            }
+        }
+
+        async function exportarTXT() {
+            const usuarios = await router.enviar('usuario/listar');
+            let txt = "LISTA DE USUÁRIOS\n=================\n";
+            usuarios.forEach(u => {
+                txt += `ID: ${u.id} | Login: ${u.login} | Permissão: ${u.permissao}\n`;
+            });
+
+            const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'usuarios.txt';
+            link.click();
+        }
+
+        window.onload = () => {
+            renderizarLista();
+        };
+
+        </script>
+</body>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Lista de Usuários</title>
+    <link rel="stylesheet" href="../index.css">
+    <script src="./view/sidebar.js"></script>
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <h2 style="color: white; padding: 20px;">Unoeste</h2>
+        <ul>
+            <li>
+                <a href="./professor.html" class="menu-item">
+                <span onclick="toprofessor()">professor</span>
+            </a>
+            </li>
+            <li>
+                <a href="./cursoView.html" class="menu-item">
+                    <span onclick="toCurso()">Cursos</span>
+                </a>
+            </li>
+            <li>
+                <a href="./listaview.html" class="menu-item">
+                    <span onclick="toLista()">disciplina</span>
+                </a>
+            </li>
+            <li>
+                <a href="./usuarioView.html" class="menu-item">
+                    <span onclick="toUsuario()">Usuários</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+    <div class="content" id="content">
+        <label for="myDropdown">Mês:</label>
+        <select id="cursoMes" name="selectedOption">
+            <option value="option1">Janeiro</option>
+            <option value="option2">Fevereiro</option>
+            <option value="option3">Março</option>
+            <option value="option1">Abril</option>
+            <option value="option2">Maio</option>
+            <option value="option3">Junho</option>
+            <option value="option1">Julho</option>
+            <option value="option2">Agosto</option>
+            <option value="option3">Setembro</option>
+            <option value="option1">Outubro</option>
+            <option value="option2">Novembro</option>
+            <option value="option3">Dezembro</option>
+        </select>
+        <label for="myDropdown">Mês:</label>
+        <select id="cursoMes" name="selectedOption">
+            <option value="option1">2025</option>    
+            <option value="option1">2024</option>    
+            <option value="option1">2023</option>    
+            <option value="option1">2022</option> 
+            <option value="option1">2021</option>       
+            <option value="option1">2020</option>    
+        </select>
+        <p></p>
+        <label>Filtro:</label>
+        <input type="text">
+        <p></p>
+        <table id="myTable">
+            <thead>
+            <tr>
+                <th></th>
+                <th>Id</th>
+                <th>Tipo</th>
+                <th>cod_desde</th>
+                <th>Curso</th>
+            </tr>
+            </thead>
+        <tbody>
+            <tr>
+                <td data-label=""></td>
+                <td data-label="Id">1</td>
+                <td data-label="Tipo">Graduação</td>
+                <td data-label="cod_desde">0</td>
+                <td data-label="Curso">Agronomia</span></td>
+                <!--<span style="color:green;font-weight:bold;"></span>-->
+            </tr>
+            <tr>
+                <td data-label=""></td>
+                <td data-label="Id">2</td>
+                <td data-label="Tipo">Graduação</td>
+                <td data-label="cod_desde">0</td>
+                <td data-label="Curso">Gastronomia</span></td>
+            </tr>
+            
+        </tbody>
+        </table>
+    <div class="content-section">
+        </div>
+        </div>
+
+        <script>
+        // Adiciona evento de clique para destacar a linha
+        const table = document.getElementById('myTable');
+        const rows = table.querySelectorAll('tbody tr');
+
+        rows.forEach(row => {
+            row.addEventListener('click', () => {
+                // Remove destaque de todas as linhas
+                rows.forEach(r => r.classList.remove('highlighted'));
+                // Adiciona destaque na linha clicada
+                row.classList.add('highlighted');
+            });
+        });
+    </script>
+</body>

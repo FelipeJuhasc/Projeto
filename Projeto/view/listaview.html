@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disciplinaes</title>
+    <link rel="stylesheet" href="../index.css">
+    <script src="./controleAcesso.js"></script>
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { display: flex; min-height: 100vh; background: #f4f6f8; }
+
+        .content { flex: 1; padding: 30px; }
+        .content h1 { margin-bottom: 20px; color: #2c3e50; }
+        .content-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,.1);
+        }
+
+        .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+        .toolbar input[type="text"] {
+            flex: 1;
+            min-width: 180px;
+            padding: 8px 12px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            outline: none;
+        }
+        .toolbar input:focus { border-color: #2196F3; }
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .btn {
+            padding: 8px 14px;
+            font-size: 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .btn-novo     { background: #4CAF50; color: white; }
+        .btn-editar   { background: #2196F3; color: white; }
+        .btn-excluir  { background: #f44336; color: white; }
+        .btn-exportar { background: #FF9800; color: white; }
+        .btn:hover    { opacity: .88; }
+        .btn:disabled {
+            background: #ccc;
+            color: #888;
+            cursor: not-allowed;
+            opacity: .7;
+        }
+
+        .disciplina-item {
+            padding: 12px 14px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            border-radius: 4px;
+            border-left: 3px solid transparent;
+            transition: background .15s;
+        }
+        .disciplina-item:hover       { background: #f5f5f5; }
+        .disciplina-item.selecionado { background: #e8f0fe; border-left-color: #2196F3; }
+        .disciplina-item strong      { font-size: 15px; color: #333; }
+        .disciplina-item small       { color: #777; font-size: 13px; }
+        .lista-vazia { color: #999; text-align: center; padding: 30px; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar" id="sidebar">
+        <h2 style="color: white; padding: 20px;">Unoeste</h2>
+        <ul>
+            <li><a href="./professor.html"  class="menu-item"><span onclick="toprofessor()">Professor</span></a></li>
+            <li><a href="./cursoView.html"  class="menu-item"><span onclick="toCurso()">Cursos</span></a></li>
+            <li><a href="./listaview.html"  class="menu-item"><span onclick="toLista()">Disciplina</span></a></li>
+            <li><a href="./usuarioView.html" class="menu-item"><span onclick="toUsuario()">Usuários</span></a></li>
+            <li ><a href="#" class="menu-item" onclick="logout()"><span>🚪 Sair (Logout)</span></a></li>
+        </ul>
+    </div>
+
+    <div class="content">
+        <h1>Lista de Disciplinas</h1>
+        <div class="content-section">
+
+            <div class="toolbar">
+                <input type="text" id="search-input"
+                       placeholder="Buscar disciplina pelo nome..."
+                       oninput="filtrarDisciplinaes()" />
+                <div class="btn-group">
+                    <button class="btn btn-novo"     onclick="novoDisciplina()">+ Novo</button>
+                    <button class="btn btn-editar"   onclick="editarDisciplina()"  id="btn-editar"  disabled>Editar</button>
+                    <button class="btn btn-excluir"  onclick="excluirDisciplina()" id="btn-excluir" disabled>Excluir</button>
+                    <button class="btn btn-exportar" onclick="exportarTXT()">⬇ Exportar TXT</button>
+                </div>
+            </div>
+
+            <div id="disciplina-list"></div>
+        </div>
+    </div>
+    <!-- MODAL DE FORMULÁRIO PARA DISCIPLINA -->
+<div id="disciplina-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background: white; padding: 25px; border-radius: 8px; width: 100%; max-width: 450px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;">
+        <h2 id="modal-title" style="margin-bottom: 20px; color: #2c3e50;">Adicionar Disciplina</h2>
+        
+        <div style="margin-bottom: 12px;">
+            <label style="display: block; margin-bottom: 3px; font-weight: 500;">Código da Disciplina:</label>
+            <input type="text" id="modal-CodDisc" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+            <div style="flex: 1;">
+                <label style="display: block; margin-bottom: 3px; font-weight: 500;">Data Início:</label>
+                <input type="date" id="modal-DTini" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+            </div>
+            <div style="flex: 1;">
+                <label style="display: block; margin-bottom: 3px; font-weight: 500;">Data Fim:</label>
+                <input type="date" id="modal-DTfim" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+            <div style="flex: 1;">
+                <label style="display: block; margin-bottom: 3px; font-weight: 500;">Turma (N):</label>
+                <input type="number" id="modal-N" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+            </div>
+            <div style="flex: 1;">
+                <label style="display: block; margin-bottom: 3px; font-weight: 500;">Carga Horária (h):</label>
+                <input type="number" id="modal-CargH" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+            <label style="display: block; margin-bottom: 3px; font-weight: 500;">Código de Controle:</label>
+            <input type="text" id="modal-Controle" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 3px; font-weight: 500;">Matrícula do Professor:</label>
+            <input type="text" id="modal-MatProf" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+        </div>
+
+        <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" id="modal-Obrig" checked style="width: auto;">
+            <label for="modal-Obrig" style="font-weight: 500;">Disciplina Obrigatória</label>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button class="btn" style="background: #e0e0e0; color: #333;" onclick="fecharModal()">Cancelar</button>
+            <button class="btn btn-novo" id="btn-salvar-modal" onclick="salvarFormularioModal()">Salvar</button>
+        </div>
+    </div>
+</div>
+
+
+        <!-- COMBINED APPLICATION SCRIPTS (ROUTER, MODEL, CONTROLLER, VIEW) -->
+    <script>
+        // ==========================================
+        // 1) ROUTER
+        // ==========================================
+        class Router {
+            constructor() { this._rotas = {}; }
+            registrar(rota, fn) { this._rotas[rota] = fn; }
+            async enviar(rota, dados) {
+                const fn = this._rotas[rota];
+                if (!fn) { console.error('[Router] Rota não encontrada:', rota); return null; }
+                return await fn(dados);
+            }
+        }
+        window.router = new Router();
+
+        // ==========================================
+        // 2) MODEL
+        // ==========================================
+        class Disciplina {
+            constructor(id, CodDisc, DTini, DTfim, N, CargH, Controle, Obrig, MatProf) {
+                this._id       = id;
+                this._CodDisc  = CodDisc;
+                this._DTini    = DTini;
+                this._DTfim    = DTfim;
+                this._N        = Number(N);
+                this._CargH    = Number(CargH);
+                this._Controle = Controle;
+                this._Obrig    = !!Obrig;
+                this._MatProf  = MatProf;
+            }
+            get id()        { return this._id; }
+            get CodDisc()   { return this._CodDisc; }
+            get DTini()     { return this._DTini; }
+            get DTfim()     { return this._DTfim; }
+            get N()         { return this._N; }
+            get CargH()     { return this._CargH; }
+            get Controle()  { return this._Controle; }
+            get Obrig()     { return this._Obrig; }
+            get MatProf()   { return this._MatProf; }
+        }
+        window.Disciplina = Disciplina;
+
+        // ==========================================
+        // 3) CONTROLLER
+        // ==========================================
+        class DisciplinaController {
+            constructor() {
+                this._apiUrl = 'http://localhost:3000/api/disciplinas';
+                this._registrarRotas();
+            }
+
+            _registrarRotas() {
+                router.registrar('disciplina/listar',      async (termo)   => await this.getAll(termo));
+                router.registrar('disciplina/buscarPorId', async (id)      => await this.buscarPorId(id));
+                router.registrar('disciplina/adicionar',   async (dados)   => await this.adicionar(dados));
+                router.registrar('disciplina/atualizar',   async (payload) => await this.atualizar(payload.id, payload.dados));
+                router.registrar('disciplina/excluir',     async (id)      => await this.excluir(id));
+            }
+
+            async getAll(termo = '') {
+                try {
+                    const url = termo ? `${this._apiUrl}?termo=${termo}` : this._apiUrl;
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    return data.map(d => new Disciplina(d._id, d.CodDisc, d.DTini, d.DTfim, d.N, d.CargH, d.Controle, d.Obrig, d.MatProf));
+                } catch (err) {
+                    console.error('Erro ao buscar disciplinas:', err);
+                    return [];
+                }
+            }
+
+            async buscarPorId(id) {
+                try {
+                    const res = await fetch(`${this._apiUrl}/${id}`);
+                    const d = await res.json();
+                    return d ? new Disciplina(d._id, d.CodDisc, d.DTini, d.DTfim, d.N, d.CargH, d.Controle, d.Obrig, d.MatProf) : null;
+                } catch (err) {
+                    console.error('Erro ao buscar disciplina por ID:', err);
+                    return null;
+                }
+            }
+
+            async adicionar(dados) {
+                try {
+                    const res = await fetch(this._apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(dados)
+                    });
+                    const d = await res.json();
+                    return new Disciplina(d._id, d.CodDisc, d.DTini, d.DTfim, d.N, d.CargH, d.Controle, d.Obrig, d.MatProf);
+                } catch (err) {
+                    console.error('Erro ao adicionar disciplina:', err);
+                    return null;
+                }
+            }
+
+            async atualizar(id, dados) {
+                try {
+                    const res = await fetch(`${this._apiUrl}/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(dados)
+                    });
+                    return res.ok;
+                } catch (err) {
+                    console.error('Erro ao atualizar disciplina:', err);
+                    return false;
+                }
+            }
+
+            async excluir(id) {
+                try {
+                    const res = await fetch(`${this._apiUrl}/${id}`, {
+                        method: 'DELETE'
+                    });
+                    return res.ok;
+                } catch (err) {
+                    console.error('Erro ao excluir disciplina:', err);
+                    return false;
+                }
+            }
+        }
+        window.disciplinaController = new DisciplinaController();
+
+        // ==========================================
+        // 4) VIEW
+        // ==========================================
+        let selecionadoId = null;
+        let modoModal = 'adicionar';
+
+        function formatarDataBR(dataIso) {
+            if (!dataIso) return '';
+            const d = new Date(dataIso);
+            return d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+        }
+
+        function formatarDataInput(dataIso) {
+            if (!dataIso) return '';
+            return dataIso.split('T')[0];
+        }
+
+        async function renderDisciplinas(lista) {
+            const container = document.getElementById('disciplina-list');
+            container.innerHTML = '';
+            
+            if (!lista || lista.length === 0) {
+                container.innerHTML = '<p class="lista-vazia">Nenhuma disciplina encontrada.</p>';
+                return;
+            }
+
+            lista.forEach(disc => {
+                const div = document.createElement('div');
+                div.className = 'disciplina-item' + (disc.id === selecionadoId ? ' selecionado' : '');
+                
+                const tipoObrig = disc.Obrig ? 'Obrigatória' : 'Optativa';
+                const corObrig = disc.Obrig ? '#c0392b' : '#1a7a42';
+
+                div.innerHTML = `
+                    <strong>Código: ${disc.CodDisc}</strong> 
+                    <span style="font-size:11px; font-weight:bold; color:${corObrig}; margin-left:8px;">${tipoObrig}</span>
+                    <br><small>
+                        Período: ${formatarDataBR(disc.DTini)} até ${formatarDataBR(disc.DTfim)} <br>
+                        Turma (N): ${disc.N} | C.H.: ${disc.CargH}h | Controle: ${disc.Controle} | Prof. Matrícula: ${disc.MatProf}
+                    </small>
+                `;
+                div.onclick = () => selecionarDisciplina(disc.id);
+                container.appendChild(div);
+            });
+        }
+
+        function selecionarDisciplina(id) {
+            selecionadoId = (selecionadoId === id) ? null : id;
+            atualizarBotoes();
+            filtrarDisciplinas();
+        }
+
+        function atualizarBotoes() {
+            const hab = selecionadoId !== null;
+            document.getElementById('btn-editar').disabled  = !hab;
+            document.getElementById('btn-excluir').disabled = !hab;
+        }
+
+        async function filtrarDisciplinas() {
+            const termo = document.getElementById('search-input').value;
+            const lista = await router.enviar('disciplina/listar', termo);
+            renderDisciplinas(lista);
+        }
+
+        // --- FUNÇÕES DE CONTROLE DO MODAL ---
+        function abrirModal(modo) {
+            modoModal = modo;
+            document.getElementById('disciplina-modal').style.display = 'flex';
+        }
+
+        function fecharModal() {
+            document.getElementById('disciplina-modal').style.display = 'none';
+            document.getElementById('modal-CodDisc').value = '';
+            document.getElementById('modal-DTini').value = '';
+            document.getElementById('modal-DTfim').value = '';
+            document.getElementById('modal-N').value = '';
+            document.getElementById('modal-CargH').value = '';
+            document.getElementById('modal-Controle').value = '';
+            document.getElementById('modal-MatProf').value = '';
+            document.getElementById('modal-Obrig').checked = true;
+        }
+
+        function novoDisciplina() {
+            const permissao = localStorage.getItem('usuarioPermissao');
+            if (permissao === 'visao' || permissao === 'edicao') {
+                alert('Seu nível de acesso não permite adicionar disciplinas.');
+                return;
+            }
+            document.getElementById('modal-title').innerText = "Adicionar Disciplina";
+            abrirModal('adicionar');
+        }
+
+        async function editarDisciplina() {
+            const permissao = localStorage.getItem('usuarioPermissao');
+            if (permissao === 'visao') {
+                alert('Seu nível de acesso não permite editar disciplinas.');
+                return;
+            }
+            if (!selecionadoId) return;
+
+            const disc = await router.enviar('disciplina/buscarPorId', selecionadoId);
+            if (!disc) return;
+
+            document.getElementById('modal-title').innerText = "Editar Disciplina";
+            document.getElementById('modal-CodDisc').value = disc.CodDisc;
+            document.getElementById('modal-DTini').value = formatarDataInput(disc.DTini);
+            document.getElementById('modal-DTfim').value = formatarDataInput(disc.DTfim);
+            document.getElementById('modal-N').value = disc.N;
+            document.getElementById('modal-CargH').value = disc.CargH;
+            document.getElementById('modal-Controle').value = disc.Controle;
+            document.getElementById('modal-MatProf').value = disc.MatProf;
+            document.getElementById('modal-Obrig').checked = disc.Obrig;
+
+            abrirModal('editar');
+        }
+
+        async function salvarFormularioModal() {
+            const CodDisc = document.getElementById('modal-CodDisc').value.trim();
+            const DTini = document.getElementById('modal-DTini').value;
+            const DTfim = document.getElementById('modal-DTfim').value;
+            const N = document.getElementById('modal-N').value;
+            const CargH = document.getElementById('modal-CargH').value;
+            const Controle = document.getElementById('modal-Controle').value.trim();
+            const MatProf = document.getElementById('modal-MatProf').value.trim();
+            const Obrig = document.getElementById('modal-Obrig').checked;
+
+            if (!CodDisc || !DTini || !DTfim || !N || !CargH || !Controle || !MatProf) {
+                alert('Por favor, preencha todos os campos obrigatórios do formulário.');
+                return;
+            }
+
+            const dados = { CodDisc, DTini, DTfim, N, CargH, Controle, Obrig, MatProf };
+
+            if (modoModal === 'adicionar') {
+                const novo = await router.enviar('disciplina/adicionar', dados);
+                if (novo) alert(`Disciplina "${novo.CodDisc}" adicionada com sucesso!`);
+            } else if (modoModal === 'editar') {
+                await router.enviar('disciplina/atualizar', { id: selecionadoId, dados });
+            }
+
+            fecharModal();
+            await filtrarDisciplinas();
+        }
+
+        async function excluirDisciplina() {
+            if (!selecionadoId) return;
+            const permissao = localStorage.getItem('usuarioPermissao');
+            if (permissao === 'visao' || permissao === 'edicao') {
+                alert('Seu nível de acesso não permite excluir disciplinas.');
+                return;
+            }
+
+            const disc = await router.enviar('disciplina/buscarPorId', selecionadoId);
+            if (!disc) return;
+
+            if (confirm(`Remover permanentemente a disciplina "${disc.CodDisc}" do MongoDB?`)) {
+                await router.enviar('disciplina/excluir', selecionadoId);
+                selecionadoId = null;
+                atualizarBotoes();
+                await filtrarDisciplinas();
+            }
+        }
+
+        async function exportarTXT() {
+            const termo = document.getElementById('search-input').value;
+            const lista = await router.enviar('disciplina/listar', termo);
+
+            if (!lista || lista.length === 0) {
+                alert('Nenhuma disciplina para exportar.');
+                return;
+            }
+
+            const linhas = [
+                'ID\tCódigo\tInício\tTérmino\tTurma\tC.H.\tControle\tObrigatoriedade\tMatrícula Prof',
+                ...lista.map(d => `${d.id}\t${d.CodDisc}\t${formatarDataBR(d.DTini)}\t${formatarDataBR(d.DTfim)}\t${d.N}\t${d.CargH}\t${d.Controle}\t${d.Obrig ? 'Obrigatória' : 'Optativa'}\t${d.MatProf}`)
+            ];
+
+            const conteudo = linhas.join('\r\n');
+            const blob = new Blob([conteudo], { type: 'text/plain;charset=utf-8' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+
+            const dataHoje = new Date().toISOString().slice(0, 10);
+            a.href     = url;
+            a.download = `disciplinas_${dataHoje}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        document.addEventListener('DOMContentLoaded', filtrarDisciplinas);
+    </script>
+</body>
+</html>
