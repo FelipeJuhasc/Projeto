@@ -1,20 +1,14 @@
 function toCurso(){
-    window.location.href = './view/cursoView.html';
-}
-function toLogin(){
-    window.location.href = './view/login.html';
+    window.location.href = '/view/cursoView.html';
 }
 function toLista(){
-    window.location.href = './view/listaView.html';
+    window.location.href = '/view/listaView.html';
 }
 function toUsuario(){
-    window.location.href = './view/usuarioView.html';
-}
-function toTestes(){
-    window.location.href = './view/abaParaTestesIA.html';
+    window.location.href = '/view/usuarioView.html';
 }
 function toProfessor(){
-    window.location.href = './view/professor.html';
+    window.location.href = '/view/professor.html';
 }
 
 function logout() {

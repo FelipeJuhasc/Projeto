@@ -7,7 +7,14 @@ const app = express();
 app.use(cors());
 app.use(express.json()); // Allows server to read JSON bodies
 // Permite que o Express sirva a index.html e as pastas 'view' e 'controller' automaticamente
-app.use(express.static(__dirname));
+// Faz com que os arquivos HTML dentro da pasta view fiquem acessíveis de forma limpa
+app.use('/view', express.static('view'));
+
+// Define especificamente que o arquivo index.html na raiz será a página inicial do site
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/index.html');
+});
+
 
 
 // 1. Connect to MongoDB right away
