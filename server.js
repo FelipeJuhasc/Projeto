@@ -6,6 +6,9 @@ const db = require('./banco.js'); // Your banco.js file
 const app = express();
 app.use(cors());
 app.use(express.json()); // Allows server to read JSON bodies
+// Permite que o Express sirva a index.html e as pastas 'view' e 'controller' automaticamente
+app.use(express.static(__dirname));
+
 
 // 1. Connect to MongoDB right away
 db.testarConexao();
