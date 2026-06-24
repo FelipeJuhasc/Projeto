@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Conta</title>
+    <link rel="stylesheet" href="../index.css">
+    <script src="./sidebar.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 420px;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 24px;
+            color: #333;
+            font-size: 24px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #555;
+            font-weight: 500;
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+        .password-wrapper {
+            position: relative;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #888;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #5a6fd8;
+        }
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        .error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="container">
+        <h2>Criar Conta</h2>
+        <form id="signupForm">
+            <div class="form-group">
+                <label for="nome">Nome Completo</label>
+                <input type="text" id="nome" placeholder="Digite seu nome completo" required>
+                <div class="error" id="nomeError">Por favor, insira seu nome.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">E-mail</label>
+                <input type="email" id="email" placeholder="seu@email.com" required>
+                <div class="error" id="emailError">Insira um e-mail válido.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="senha">Senha</label>
+                <div class="password-wrapper">
+                    <input type="password" id="senha" placeholder="Mínimo 6 caracteres" required minlength="6">
+                    <span class="toggle-password" onclick="togglePassword()">Mostrar</span>
+                </div>
+                <div class="error" id="senhaError">A senha deve ter pelo menos 6 caracteres.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmar">Confirmar Senha</label>
+                <div class="password-wrapper">
+                    <input type="password" id="confirmar" placeholder="Repita a senha" required>
+                    <span class="toggle-password" onclick="togglePassword('confirmar')">Mostrar</span>
+                </div>
+                <div class="error" id="confirmarError">As senhas não coincidem.</div>
+            </div>
+
+            <button type="submit">Criar Conta</button>
+        </form>
+
+        <div class="success" id="successMessage">
+            Conta criada com sucesso! Redirecionando...
+        </div>
+
+        <div class="login-link">
+            Já tem conta? <a href="login.html">Fazer login</a>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword(fieldId = 'senha') {
+            const field = document.getElementById(fieldId);
+            const toggle = field.nextElementSibling;
+            if (field.type === 'password') {
+                field.type = 'text';
+                toggle.textContent = 'Ocultar';
+            } else {
+                field.type = 'password';
+                toggle.textContent = 'Mostrar';
+            }
+        }
+
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Resetar erros
+            document.querySelectorAll('.error').forEach(el => el.style.display = 'none');
+            
+            const nome = document.getElementById('nome').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const senha = document.getElementById('senha').value;
+            const confirmar = document.getElementById('confirmar').value;
+
+            let valid = true;
+
+            if (!nome) {
+                document.getElementById('nomeError').style.display = 'block';
+                valid = false;
+            }
+            if (!email || !email.includes('@') || !email.includes('.')) {
+                document.getElementById('emailError').style.display = 'block';
+                valid = false;
+            }
+            if (senha.length < 6) {
+                document.getElementById('senhaError').style.display = 'block';
+                valid = false;
+            }
+            if (senha !== confirmar) {
+                document.getElementById('confirmarError').style.display = 'block';
+                valid = false;
+            }
+
+            if (valid) {
+                document.getElementById('successMessage').style.display = 'block';
+                setTimeout(() => {
+                    // Redireciona para a página principal ou login após sucesso
+                    window.location.href = 'login.html';
+                }, 2000);
+            }
+        });
+    </script>
+</body>
+</html>
