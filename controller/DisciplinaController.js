@@ -1,6 +1,6 @@
 class DisciplinaController {
     constructor() {
-        this._apiUrl = 'http://localhost:3000/api/disciplinas';
+        this._apiUrl = '/api/disciplinas';
         this._registrarRotas();
     }
 
