@@ -84,7 +84,13 @@
     <div class="content">
         <h1>Lista de Disciplinas</h1>
         <div class="content-section">
-
+<div style="display: flex; gap: 8px; align-items: center; min-width: 300px;">
+        <label style="font-size: 13px; color: #555;">De:</label>
+        <input type="date" id="filter-dt-ini" onchange="filtrarDisciplinas()" style="padding: 6px 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; outline: none;" />
+        
+        <label style="font-size: 13px; color: #555;">Até:</label>
+        <input type="date" id="filter-dt-fim" onchange="filtrarDisciplinas()" style="padding: 6px 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; outline: none;" />
+    </div>
             <div class="toolbar">
                 <input type="text" id="search-input"
                        placeholder="Buscar disciplina pelo nome..."
@@ -340,10 +346,38 @@
         }
 
         async function filtrarDisciplinas() {
-            const termo = document.getElementById('search-input').value;
-            const lista = await router.enviar('disciplina/listar', termo);
-            renderDisciplinas(lista);
-        }
+    const termo = document.getElementById('search-input').value;
+    const dtIni = document.getElementById('filter-dt-ini').value;
+    const dtFim = document.getElementById('filter-dt-fim').value;
+
+    // Constrói os parâmetros dinamicamente na rota da controller
+    const lista = await router.enviar('disciplina/listar', { termo, dtIni, dtFim });
+    renderDisciplinas(lista);
+}
+
+// Pequeno ajuste necessário na Controller para receber o objeto com os filtros
+// Altere o método getAll dentro da sua DisciplinaController para ler o objeto:
+async function getAll(filtros = {}) {
+    try {
+        const termo = filtros.termo || '';
+        const dtIni = filtros.dtIni || '';
+        const dtFim = filtros.dtFim || '';
+
+        // Cria a URL com todos os filtros acumulados
+        let url = `${this._apiUrl}?termo=${encodeURIComponent(termo)}&dtIni=${dtIni}&dtFim=${dtFim}`;
+        
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        return data.map(d => new Disciplina(
+            d._id, d.CodDisc, d.DTini, d.DTfim, d.N, d.CargH, d.Controle, d.Obrig, d.MatProf
+        ));
+    } catch (err) {
+        console.error('Erro ao buscar disciplinas:', err);
+        return [];
+    }
+}
+
 
         // --- FUNÇÕES DE CONTROLE DO MODAL ---
         function abrirModal(modo) {
