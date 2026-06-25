@@ -31,7 +31,7 @@ const UsuarioModel = mongoose.model('Usuario', UsuarioSchema, 'usuario');
 // =================================================================
 
 // --- LOGIN AUTHENTICATION ---
-app.post('/api/login?v=1.0.1', async (req, res) => {
+app.post('/api/login', async (req, res) => {
     try {
         const { login, senha } = req.body;
         const usuarioEncontrado = await UsuarioModel.findOne({ login: login, senha: senha });
@@ -51,7 +51,7 @@ app.post('/api/login?v=1.0.1', async (req, res) => {
 });
 
 // --- USUARIOS CRUD ---
-app.get('/api/usuarios?v=1.0.1', async (req, res) => {
+app.get('/api/usuarios', async (req, res) => {
     try {
         const termo = req.query.termo || '';
         let condicao = {};
@@ -65,7 +65,7 @@ app.get('/api/usuarios?v=1.0.1', async (req, res) => {
     }
 });
 
-app.get('/api/usuarios/:id?v=1.0.1', async (req, res) => {
+app.get('/api/usuarios/:id', async (req, res) => {
     try {
         const usuario = await db.buscarPorId(UsuarioModel, req.params.id);
         res.json(usuario);
@@ -74,7 +74,7 @@ app.get('/api/usuarios/:id?v=1.0.1', async (req, res) => {
     }
 });
 
-app.post('/api/usuarios?v=1.0.1', async (req, res) => {
+app.post('/api/usuarios', async (req, res) => {
     try {
         const novoId = await db.inserir(UsuarioModel, req.body);
         res.json({ _id: novoId, ...req.body });
@@ -83,7 +83,7 @@ app.post('/api/usuarios?v=1.0.1', async (req, res) => {
     }
 });
 
-app.put('/api/usuarios/:id?v=1.0.1', async (req, res) => {
+app.put('/api/usuarios/:id', async (req, res) => {
     try {
         await db.atualizar(UsuarioModel, req.params.id, req.body);
         res.json({ success: true });
@@ -92,7 +92,7 @@ app.put('/api/usuarios/:id?v=1.0.1', async (req, res) => {
     }
 });
 
-app.delete('/api/usuarios/:id?v=1.0.1', async (req, res) => {
+app.delete('/api/usuarios/:id', async (req, res) => {
     try {
         await db.deletar(UsuarioModel, req.params.id);
         res.json({ success: true });
@@ -130,7 +130,7 @@ const ProfessorModel = mongoose.model('Professor', ProfessorSchema, 'professor')
 // =================================================================
 // ROTAS DA API PARA PROFESSOR
 // =================================================================
-app.get('/api/professores?v=1.0.1', async (req, res) => {
+app.get('/api/professores', async (req, res) => {
     try {
         const termo = req.query.termo || '';
         let condicao = {};
@@ -144,7 +144,7 @@ app.get('/api/professores?v=1.0.1', async (req, res) => {
     }
 });
 
-app.get('/api/professores/:id?v=1.0.1', async (req, res) => {
+app.get('/api/professores/:id', async (req, res) => {
     try {
         const professor = await db.buscarPorId(ProfessorModel, req.params.id);
         res.json(professor);
@@ -153,7 +153,7 @@ app.get('/api/professores/:id?v=1.0.1', async (req, res) => {
     }
 });
 
-app.post('/api/professores?v=1.0.1', async (req, res) => {
+app.post('/api/professores', async (req, res) => {
     try {
         const novoId = await db.inserir(ProfessorModel, req.body);
         res.json({ _id: novoId, ...req.body });
@@ -162,7 +162,7 @@ app.post('/api/professores?v=1.0.1', async (req, res) => {
     }
 });
 
-app.put('/api/professores/:id?v=1.0.1', async (req, res) => {
+app.put('/api/professores/:id', async (req, res) => {
     try {
         await db.atualizar(ProfessorModel, req.params.id, req.body);
         res.json({ success: true });
@@ -171,7 +171,7 @@ app.put('/api/professores/:id?v=1.0.1', async (req, res) => {
     }
 });
 
-app.delete('/api/professores/:id?v=1.0.1', async (req, res) => {
+app.delete('/api/professores/:id', async (req, res) => {
     try {
         await db.deletar(ProfessorModel, req.params.id);
         res.json({ success: true });
@@ -202,7 +202,7 @@ const DisciplinaModel = mongoose.model('Disciplina', DisciplinaSchema, 'discinpl
 // =================================================================
 // ROTAS DA API PARA DISCIPLINA
 // =================================================================
-app.get('/api/disciplinas?v=1.0.1', async (req, res) => {
+app.get('/api/disciplinas', async (req, res) => {
     try {
         const termo = req.query.termo || '';
         let condicao = {};
@@ -216,7 +216,7 @@ app.get('/api/disciplinas?v=1.0.1', async (req, res) => {
     }
 });
 
-app.get('/api/disciplinas/:id?v=1.0.1', async (req, res) => {
+app.get('/api/disciplinas/:id', async (req, res) => {
     try {
         const disciplina = await db.buscarPorId(DisciplinaModel, req.params.id);
         res.json(disciplina);
@@ -225,7 +225,7 @@ app.get('/api/disciplinas/:id?v=1.0.1', async (req, res) => {
     }
 });
 
-app.post('/api/disciplinas?v=1.0.1', async (req, res) => {
+app.post('/api/disciplinas', async (req, res) => {
     try {
         const novoId = await db.inserir(DisciplinaModel, req.body);
         res.json({ _id: novoId, ...req.body });
@@ -234,7 +234,7 @@ app.post('/api/disciplinas?v=1.0.1', async (req, res) => {
     }
 });
 
-app.put('/api/disciplinas/:id?v=1.0.1', async (req, res) => {
+app.put('/api/disciplinas/:id', async (req, res) => {
     try {
         await db.atualizar(DisciplinaModel, req.params.id, req.body);
         res.json({ success: true });
@@ -243,7 +243,7 @@ app.put('/api/disciplinas/:id?v=1.0.1', async (req, res) => {
     }
 });
 
-app.delete('/api/disciplinas/:id?v=1.0.1', async (req, res) => {
+app.delete('/api/disciplinas/:id', async (req, res) => {
     try {
         await db.deletar(DisciplinaModel, req.params.id);
         res.json({ success: true });
@@ -279,7 +279,7 @@ const CursoModel = mongoose.model('Curso', CursoSchema, 'curso');
 // =================================================================
 // ROTAS DA API PARA CURSO
 // =================================================================
-app.get('/api/cursos?v=1.0.1', async (req, res) => {
+app.get('/api/cursos', async (req, res) => {
     try {
         const termo = req.query.termo || '';
         let condicao = {};
@@ -293,7 +293,7 @@ app.get('/api/cursos?v=1.0.1', async (req, res) => {
     }
 });
 
-app.get('/api/cursos/:id?v=1.0.1', async (req, res) => {
+app.get('/api/cursos/:id', async (req, res) => {
     try {
         const curso = await db.buscarPorId(CursoModel, req.params.id);
         res.json(curso);
@@ -302,7 +302,7 @@ app.get('/api/cursos/:id?v=1.0.1', async (req, res) => {
     }
 });
 
-app.post('/api/cursos?v=1.0.1', async (req, res) => {
+app.post('/api/cursos', async (req, res) => {
     try {
         const novoId = await db.inserir(CursoModel, req.body);
         res.json({ _id: novoId, ...req.body });
@@ -311,7 +311,7 @@ app.post('/api/cursos?v=1.0.1', async (req, res) => {
     }
 });
 
-app.put('/api/cursos/:id?v=1.0.1', async (req, res) => {
+app.put('/api/cursos/:id', async (req, res) => {
     try {
         await db.atualizar(CursoModel, req.params.id, req.body);
         res.json({ success: true });
@@ -320,7 +320,7 @@ app.put('/api/cursos/:id?v=1.0.1', async (req, res) => {
     }
 });
 
-app.delete('/api/cursos/:id?v=1.0.1', async (req, res) => {
+app.delete('/api/cursos/:id', async (req, res) => {
     try {
         await db.deletar(CursoModel, req.params.id);
         res.json({ success: true });
