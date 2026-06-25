@@ -1,6 +1,6 @@
 class DisciplinaController {
     constructor() {
-        this._apiUrl = 'https://onrender.com';
+        this._apiUrl = 'https://projeto-ii4x.onrender.com';
         this._registrarRotas();
     }
 

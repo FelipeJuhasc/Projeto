@@ -15,15 +15,7 @@ const path = require('path'); // Adicione esta linha no topo do arquivo junto co
 
 // ... mantenha as configurações de cors, express.json e banco.js normais ...
 
-// 1. Libera acesso público para as subpastas e arquivos essenciais
-app.use(express.static(__dirname)); 
-app.use('/view', express.static(path.join(__dirname, 'view')));
-app.use('/controller', express.static(path.join(__dirname, 'controller')));
 
-// 2. Define explicitamente que a página inicial será o index.html da raiz
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
 
 // ... IMPORTANTE: Deixe as rotas de API (app.post('/api/login'), app.get('/api/usuarios'), etc.) ABAIXO deste bloco estático ...
 
@@ -333,4 +325,16 @@ app.delete('/api/cursos/:id', async (req, res) => {
 
 }
 
-app.listen(3000, () => console.log('Backend running on http://localhost:3000'));
+app.use(express.static(__dirname)); 
+app.use('/view', express.static(path.join(__dirname, 'view')));
+app.use('/controller', express.static(path.join(__dirname, 'controller')));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Inicialização do servidor
+const PORT = process.env.PORT || 3000;
+db.testarConexao();
+app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+
