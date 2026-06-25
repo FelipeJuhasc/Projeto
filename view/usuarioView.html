@@ -183,11 +183,12 @@
         window.Usuario = Usuario;
     </script>
 
-    <!-- 3) CONTROLLER (Updated to call your Node.js Backend instead of using local memory lists) -->
+        <!-- 3) CONTROLLER (Updated to call your Node.js Backend instead of using local memory lists) -->
     <script>
         class UsuarioController {
             constructor() {
-                this._apiUrl = 'http://localhost:3000/api/usuarios?v=1.0.1';
+                // Rota relativa limpa: funciona em qualquer lugar automaticamente no Render
+                this._apiUrl = '/api/usuarios';
                 this._registrarRotas();
             }
 
@@ -201,7 +202,8 @@
 
             async getAll(termo = '') {
                 try {
-                    const url = termo ? `${this._apiUrl}?termo=${termo}` : this._apiUrl;
+                    // Trata corretamente os parâmetros de busca por termo
+                    const url = termo ? `${this._apiUrl}?termo=${encodeURIComponent(termo)}` : this._apiUrl;
                     const res = await fetch(url);
                     const data = await res.json();
                     return data.map(u => new Usuario(u._id, u.login, u.senha, u.permissao));
@@ -265,6 +267,7 @@
         }
         window.usuarioController = new UsuarioController();
     </script>
+
 
     <!-- 4) VIEW (Asynchronous interface renderer) -->
     <script>
