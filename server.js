@@ -4,7 +4,11 @@ const mongoose = require('mongoose');
 const db = require('./banco.js'); // Your banco.js file
 
 const app = express();
-app.use(cors());
+app.use(cors({
+    origin: '*', // Libera para o Netlify, localhost e Render conversarem sem bloqueios
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type']
+}));
 app.use(express.json()); // Allows server to read JSON bodies
 // Permite que o Express sirva a index.html e as pastas 'view' e 'controller' automaticamente
 const path = require('path'); // Adicione esta linha no topo do arquivo junto com os outros require
