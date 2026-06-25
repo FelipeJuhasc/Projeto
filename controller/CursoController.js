@@ -1,7 +1,6 @@
 class CursoController {
     constructor() {
-        this._apiUrl = 'https://onrender.com';
-
+        this._apiUrl = 'http://localhost:3000/api/cursos';
         this._registrarRotas();
     }
 
