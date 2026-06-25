@@ -1,31 +1,21 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const path = require('path'); 
 const db = require('./banco.js'); // Your banco.js file
 
 const app = express();
+
+// 1. GLOBAL MIDDLEWARES
 app.use(cors({
-    origin: '*', // Libera para o Netlify, localhost e Render conversarem sem bloqueios
+    origin: '*', 
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type']
 }));
-app.use(express.json()); // Allows server to read JSON bodies
-// Permite que o Express sirva a index.html e as pastas 'view' e 'controller' automaticamente
-const path = require('path'); // Adicione esta linha no topo do arquivo junto com os outros require
+app.use(express.json()); 
 
-// ... mantenha as configurações de cors, express.json e banco.js normais ...
-
-
-
-// ... IMPORTANTE: Deixe as rotas de API (app.post('/api/login'), app.get('/api/usuarios'), etc.) ABAIXO deste bloco estático ...
-
-
-// 1. Connect to MongoDB right away
-db.testarConexao();
-
-{
 // =================================================================
-// SCHEMA E MODELO DE USUARIO
+// 2. SCHEMAS & MONGOOSE MODELS (No block wrapper braces!)
 // =================================================================
 const UsuarioSchema = new mongoose.Schema({
     login: { type: String, required: true },
@@ -34,22 +24,23 @@ const UsuarioSchema = new mongoose.Schema({
 });
 const UsuarioModel = mongoose.model('Usuario', UsuarioSchema, 'usuario');
 
+// =================================================================
+// 3. API ENDPOINTS
+// =================================================================
+
+// --- LOGIN AUTHENTICATION ---
 app.post('/api/login', async (req, res) => {
     try {
         const { login, senha } = req.body;
-
-        // Procura um documento na coleção com o exato login e senha digitados
         const usuarioEncontrado = await UsuarioModel.findOne({ login: login, senha: senha });
 
         if (usuarioEncontrado) {
-            // Se encontrar, retorna sucesso e os dados básicos do usuário (como a permissão)
             res.json({ 
                 success: true, 
                 message: 'Autenticado com sucesso!',
                 permissao: usuarioEncontrado.permissao 
             });
         } else {
-            // Se não encontrar, retorna falha
             res.status(401).json({ success: false, message: 'Usuário ou senha inválidos.' });
         }
     } catch (err) {
@@ -57,12 +48,13 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// --- USUARIOS CRUD ---
 app.get('/api/usuarios', async (req, res) => {
     try {
         const termo = req.query.termo || '';
         let condicao = {};
         if (termo) {
-            condicao = { login: { $regex: termo, $options: 'i' } }; // Case-insensitive search
+            condicao = { login: { $regex: termo, $options: 'i' } }; 
         }
         const usuarios = await db.buscarWhere(UsuarioModel, condicao);
         res.json(usuarios);
@@ -106,7 +98,19 @@ app.delete('/api/usuarios/:id', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-}
+
+// ** NOTE: Keep your Professor, Disciplina, and Curso endpoints placed right here **
+
+// =================================================================
+// 4. STATIC FRONTEND ROUTING (Always keep at the absolute bottom!)
+// =================================================================
+app.use(express.static(__dirname)); 
+app.use('/view', express.static(path.join(__dirname, 'view')));
+app.use('/controller', express.static(path.join(__dirname, 'controller')));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 {
 // =================================================================
@@ -326,26 +330,20 @@ app.delete('/api/cursos/:id', async (req, res) => {
 }
 
 // =================================================================
-// 3. ARQUIVOS ESTÁTICOS DO FRONTEND (DEIXE APENAS UM BLOCO NO FINAL)
+// 5. SERVER RUNTIME ENGINE INITIALIZATION
 // =================================================================
-app.use(express.static(__dirname)); 
-app.use('/view', express.static(path.join(__dirname, 'view')));
-app.use('/controller', express.static(path.join(__dirname, 'controller')));
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// Inicialização única do servidor e do banco de dados
 const PORT = process.env.PORT || 3000;
 
 async function iniciarSistema() {
-    // Liga o banco do banco.js
-    await db.testarConexao();
-    
-    // Inicia o servidor Express na nuvem
-    app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+    try {
+        // Force establish database pool pipeline connection first
+        await db.testarConexao();
+        
+        // Start processing network server traffic streams
+        app.listen(PORT, () => console.log(`Servidor rodando com sucesso na porta ${PORT}`));
+    } catch (error) {
+        console.error("Erro crítico na inicialização do ecossistema:", error.message);
+    }
 }
 
 iniciarSistema();
-
