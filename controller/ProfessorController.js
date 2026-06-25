@@ -1,6 +1,6 @@
 class ProfessorController {
     constructor() {
-        this._apiUrl = 'http://localhost:3000/api/professores';
+        this._apiUrl = 'https://onrender.com';
         this._registrarRotas();
     }
 

@@ -1,6 +1,6 @@
 class UsuarioController {
     constructor() {
-        this._apiUrl = 'https://projeto-ii4x.onrender.com/view/usuarioView.html';
+        this._apiUrl = 'https://onrender.com';
         this._registrarRotas();
     }
 
