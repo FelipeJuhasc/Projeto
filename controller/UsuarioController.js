@@ -1,6 +1,6 @@
 class UsuarioController {
     constructor() {
-        this._apiUrl = 'https://projeto-ii4x.onrender.com';
+        this._apiUrl = 'http://localhost:3000/api/usuarios';
         this._registrarRotas();
     }
 
