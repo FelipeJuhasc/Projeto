@@ -1,6 +1,6 @@
 class CursoController {
     constructor() {
-        this._apiUrl = 'http://localhost:3000/api/cursos?v=1.0.1';
+        this._apiUrl = 'http://localhost:3000/api/cursos';
         this._registrarRotas();
     }
 
