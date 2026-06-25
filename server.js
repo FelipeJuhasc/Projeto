@@ -325,6 +325,9 @@ app.delete('/api/cursos/:id', async (req, res) => {
 
 }
 
+// =================================================================
+// 3. ARQUIVOS ESTÁTICOS DO FRONTEND (DEIXE APENAS UM BLOCO NO FINAL)
+// =================================================================
 app.use(express.static(__dirname)); 
 app.use('/view', express.static(path.join(__dirname, 'view')));
 app.use('/controller', express.static(path.join(__dirname, 'controller')));
@@ -333,8 +336,16 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Inicialização do servidor
+// Inicialização única do servidor e do banco de dados
 const PORT = process.env.PORT || 3000;
-db.testarConexao();
-app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+
+async function iniciarSistema() {
+    // Liga o banco do banco.js
+    await db.testarConexao();
+    
+    // Inicia o servidor Express na nuvem
+    app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+}
+
+iniciarSistema();
 
