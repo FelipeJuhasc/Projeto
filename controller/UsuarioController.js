@@ -1,6 +1,6 @@
 class UsuarioController {
     constructor() {
-        this._apiUrl = 'http://localhost:3000/api/usuarios';
+        this._apiUrl = 'http://localhost:3000/api/usuarios?v=1.0.1';
         this._registrarRotas();
     }
 

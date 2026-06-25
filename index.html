@@ -112,7 +112,9 @@
 
             try {
                 // Envia as credenciais informadas para o seu servidor Express
-                const response = await fetch('http://localhost:3000/api/login', {
+                // O '?v=1.0.1' obriga QUALQUER celular a ignorar o cache antigo e buscar a rota limpa do servidor
+                const response = await fetch('/api/login?v=1.0.1', {
+
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 

@@ -1,6 +1,6 @@
 class ProfessorController {
     constructor() {
-        this._apiUrl = 'http://localhost:3000/api/professores';
+        this._apiUrl = 'http://localhost:3000/api/professores?v=1.0.1';
         this._registrarRotas();
     }
 
