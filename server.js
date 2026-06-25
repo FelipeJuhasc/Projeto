@@ -204,11 +204,29 @@ const DisciplinaModel = mongoose.model('Disciplina', DisciplinaSchema, 'discinpl
 // =================================================================
 app.get('/api/disciplinas', async (req, res) => {
     try {
-        const termo = req.query.termo || '';
+        const { termo, dtIni, dtFim } = req.query;
         let condicao = {};
+
+        // 1. Filtro por Código (Texto)
         if (termo) {
-            condicao = { CodDisc: { $regex: termo, $options: 'i' } }; // Busca pelo código da disciplina
+            condicao.CodDisc = { $regex: termo, $options: 'i' };
         }
+
+        // 2. Filtro Lógico por Período de Data
+        // Filtra disciplinas onde o início ou o fim estejam dentro do intervalo selecionado
+        if (dtIni || dtFim) {
+            condicao.$and = [];
+            
+            if (dtIni) {
+                // Disciplina deve terminar depois ou na data inicial selecionada
+                condicao.$and.push({ DTfim: { $gte: new Date(dtIni) } });
+            }
+            if (dtFim) {
+                // Disciplina deve começar antes ou na data final selecionada
+                condicao.$and.push({ DTini: { $lte: new Date(dtFim) } });
+            }
+        }
+
         const disciplinas = await db.buscarWhere(DisciplinaModel, condicao);
         res.json(disciplinas);
     } catch (err) {
