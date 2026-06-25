@@ -12,29 +12,37 @@ class DisciplinaController {
         router.registrar('disciplina/excluir',     async (id)      => await this.excluir(id));
     }
 
-    async getAll(termo = '') {
-        try {
-            const url = termo ? `${this._apiUrl}?termo=${termo}` : this._apiUrl;
-            const res = await fetch(url);
-            const data = await res.json();
-            
-            // Converte o array vindo do MongoDB (usando _id) em instâncias da classe Disciplina
-            return data.map(d => new Disciplina(
-                d._id, 
-                d.CodDisc, 
-                d.DTini, 
-                d.DTfim, 
-                d.N, 
-                d.CargH, 
-                d.Controle, 
-                d.Obrig, 
-                d.MatProf
-            ));
-        } catch (err) {
-            console.error('Erro ao buscar disciplinas do banco:', err);
-            return [];
+    async getAll(filtros = '') {
+    try {
+        let termo = '';
+        let dtIni = '';
+        let dtFim = '';
+
+        // Tratamento inteligente: verifica se o filtro recebido é o novo objeto ou texto comum
+        if (typeof filtros === 'object' && filtros !== null) {
+            termo = filtros.termo || '';
+            dtIni = filtros.dtIni || '';
+            dtFim = filtros.dtFim || '';
+        } else {
+            termo = filtros || '';
         }
+
+        // Constrói a URL de forma segura enviando os parâmetros para o Render
+        const url = `${this._apiUrl}?termo=${encodeURIComponent(termo)}&dtIni=${dtIni}&dtFim=${dtFim}`;
+        
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        // Mapeia o resultado retornado do MongoDB Atlas
+        return data.map(d => new Disciplina(
+            d._id, d.CodDisc, d.DTini, d.DTfim, d.N, d.CargH, d.Controle, d.Obrig, d.MatProf
+        ));
+    } catch (err) {
+        console.error('Erro ao buscar disciplinas no banco:', err);
+        return [];
     }
+}
+
 
     async buscarPorId(id) {
         try {

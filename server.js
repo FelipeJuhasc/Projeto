@@ -234,6 +234,7 @@ app.get('/api/disciplinas', async (req, res) => {
     }
 });
 
+
 app.get('/api/disciplinas/:id', async (req, res) => {
     try {
         const disciplina = await db.buscarPorId(DisciplinaModel, req.params.id);
