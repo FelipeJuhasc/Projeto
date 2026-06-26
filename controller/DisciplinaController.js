@@ -5,12 +5,17 @@ class DisciplinaController {
     }
 
     _registrarRotas() {
-        router.registrar('disciplina/listar',      async (termo)   => await this.getAll(termo));
-        router.registrar('disciplina/buscarPorId', async (id)      => await this.buscarPorId(id));
-        router.registrar('disciplina/adicionar',   async (dados)   => await this.adicionar(dados));
-        router.registrar('disciplina/atualizar',   async (payload) => await this.atualizar(payload.id, payload.dados));
-        router.registrar('disciplina/excluir',     async (id)      => await this.excluir(id));
-    }
+    router.registrar('disciplina/listar',      async (termo)   => await this.getAll(termo));
+    router.registrar('disciplina/buscarPorId', async (id)      => await this.buscarPorId(id));
+    router.registrar('disciplina/adicionar',   async (dados)   => await this.adicionar(dados));
+    router.registrar('disciplina/atualizar',   async (payload) => await this.atualizar(payload.id, payload.dados));
+    router.registrar('disciplina/excluir',     async (id)      => await this.excluir(id));
+    
+    // Garanta que essas duas linhas abaixo estejam salvas no seu arquivo DisciplinaController.js externo:
+    router.registrar('curso/vincular',         async (p)       => await this.vincularDisciplina(p.cursoId, p.disciplinaId));
+    router.registrar('curso/desvincular',      async (p)       => await this.desvincularDisciplina(p.cursoId, p.disciplinaId));
+}
+
 
     async getAll(filtros = '') {
     try {
