@@ -198,7 +198,7 @@ const DisciplinaSchema = new mongoose.Schema({
     MatProf:  { type: String, required: true } // Guarda o ID/Matrícula do professor vinculado
 });
 
-const DisciplinaModel = mongoose.model('Disciplina', DisciplinaSchema, 'discinplina');
+const DisciplinaModel = mongoose.model('Disciplina', DisciplinaSchema, 'disciplina');
 
 
 
