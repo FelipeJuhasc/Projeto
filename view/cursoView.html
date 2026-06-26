@@ -187,6 +187,13 @@
         <h2 id="schedule-modal-title" style="margin-bottom: 10px; color: #2c3e50;">Cronograma do Curso</h2>
         <p id="schedule-course-info" style="font-size: 13px; color: #666; margin-bottom: 20px; font-weight: bold;"></p>
         
+        <!-- Procure por id="schedule-course-info" no seu cursoView.html e adicione este botão logo abaixo dele: -->
+        <p id="schedule-course-info" style="font-size: 13px; color: #666; margin-bottom: 20px; font-weight: bold;"></p>
+
+        <button class="btn" onclick="dispararRotacaoMensal()" style="background: #00bcd4; color: white; font-weight: bold; margin-bottom: 15px; width: 100%;">
+        🔄 Simular Rotação Mensal (Descer Ordens)
+        </button>
+
         <!-- DROP-DOWN INTERFACE CONTROLLER SELECTION -->
         <div style="background: #f4f6f8; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
             <label style="font-weight: bold; color: #333; font-size: 14px;">Agendar Nova Disciplina neste Curso:</label>
@@ -214,6 +221,30 @@
     <script src="/view/listaview.html"></script>
         <!-- COMBINED APPLICATION SCRIPTS (ROUTER, MODEL, CONTROLLER, VIEW) -->
     <script>
+        async function dispararRotacaoMensal() {
+    if (!selecionadoId) return;
+
+    if (confirm("Deseja simular a rotação mensal? As disciplinas não-fixas descerão 1 posição na ordem de escala.")) {
+        try {
+            const res = await fetch(`/api/cursos/${selecionadoId}/rotacionar-cronograma`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            const data = await res.json();
+            if (data.success) {
+                // Recarrega a grade com a nova ordenação visual na mesma hora!
+                await renderizarGradeCronograma();
+            } else {
+                alert("Erro ao aplicar rotação no servidor.");
+            }
+        } catch (err) {
+            console.error("Erro na requisição de rotação:", err);
+            alert("Erro de conexão ao rodar escala.");
+        }
+    }
+}
+
         // ==========================================
         // 1) ROUTER
         // ==========================================

@@ -369,6 +369,76 @@ app.get('/api/cursos/:id', async (req, res) => {
     }
 });
 
+app.post('/api/cursos/:cursoId/rotacionar-cronograma', async (req, res) => {
+    try {
+        const { cursoId } = req.params;
+        const curso = await CursoModel.findById(cursoId);
+        if (!curso) return res.status(404).json({ success: false, message: 'Curso não encontrado.' });
+
+        if (!curso.disciplinas || curso.disciplinas.length <= 1) {
+            return res.json({ success: true, message: 'Quantidade insuficiente de disciplinas para rotacionar.', curso });
+        }
+
+        // 1. Mapeia e separa as posições que estão ocupadas por disciplinas FIXAS
+        const posicoesFixas = curso.disciplinas.filter(d => d.fixa).map(d => d.ordem);
+        const totalDisciplinas = curso.disciplinas.length;
+
+        // 2. Cria uma lista das disciplinas que PODEM rodar (não-fixas)
+        let naoFixas = curso.disciplinas.filter(d => !d.fixa);
+
+        // 3. Aplica a rotação lógica descendo 1 posição e jogando o 1 para o final
+        naoFixas.forEach(d => {
+            let novaOrdem = d.ordem - 1;
+
+            // Se chegou a 1 ou menos na contagem, vira o último na ordem (fim da fila)
+            if (novaOrdem < 1) {
+                novaOrdem = totalDisciplinas;
+            }
+
+            d.ordem = novaOrdem;
+        });
+
+        // 4. Resolve colisões com posições fixas (ajusta recursivamente se bater com um fixo)
+        let houveColisao;
+        do {
+            houveColisao = false;
+            naoFixas.forEach(d => {
+                // Se colidir com a posição de um fixo, desce mais 1 posição (pula a contagem)
+                if (posicoesFixas.includes(d.ordem)) {
+                    d.ordem = d.ordem - 1;
+                    if (d.ordem < 1) d.ordem = totalDisciplinas;
+                    houveColisao = true;
+                }
+            });
+        } while (houveColisao);
+
+        // 5. Junta novamente o array atualizado de fixas e não-fixas
+        const todasAtualizadas = [
+            ...curso.disciplinas.filter(d => d.fixa),
+            ...naoFixas
+        ];
+
+        // Ordena para garantir integridade numérica de 1 até o total
+        todasAtualizadas.sort((a, b) => a.ordem - b.ordem);
+        
+        // Corrige duplicidades raras forçando a sequência linear nas não-fixas se necessário
+        let ordemEsperada = 1;
+        todasAtualizadas.forEach(d => {
+            d.ordem = ordemEsperada++;
+        });
+
+        // Salva as novas ordens de rotação no MongoDB Atlas
+        curso.disciplinas = todasAtualizadas;
+        await curso.save();
+
+        const cursoFinal = await CursoModel.findById(cursoId).populate('disciplinas.disciplinaId');
+        res.json({ success: true, curso: cursoFinal });
+
+    } catch (err) {
+        console.error('Erro ao rotacionar cronograma:', err.message);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
 
 
 
