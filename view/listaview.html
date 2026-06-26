@@ -504,7 +504,9 @@ async function getAll(filtros = {}) {
             URL.revokeObjectURL(url);
         }
 
-        document.addEventListener('DOMContentLoaded', filtrarDisciplinas);
+        document.addEventListener('DOMContentLoaded', async () => {
+    await filtrarDisciplinas();
+});
     </script>
 </body>
 </html>
