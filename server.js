@@ -196,11 +196,7 @@ const DisciplinaSchema = new mongoose.Schema({
     Obrig:    { type: Boolean, default: true },
     MatProf:  { type: String, required: true },
         // Nova estrutura para permitir ordenação, edição e status de fixo por curso
-    disciplinas: [{
-        disciplinaId: { type: mongoose.Schema.Types.ObjectId, ref: 'Disciplina' },
-        ordem:        { type: Number, required: true, default: 1 },
-        fixa:         { type: Boolean, required: true, default: false }
-    }]
+    
 
 });
 
@@ -303,7 +299,11 @@ const CursoSchema = new mongoose.Schema({
     FimMat:      { type: Date, required: true },
     Matcoord:    { type: String, required: true },
     PasSeg:      { type: Boolean, default: false },
-    disciplinas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Disciplina' }] // Ref deve bater com o nome do modelo
+    disciplinas: [{
+        disciplinaId: { type: mongoose.Schema.Types.ObjectId, ref: 'Disciplina' },
+        ordem:        { type: Number, required: true, default: 1 },
+        fixa:         { type: Boolean, required: true, default: false }
+    }]
 });
 const CursoModel = mongoose.model('Curso', CursoSchema, 'curso');
 
