@@ -321,15 +321,17 @@ app.get('/api/cursos', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-
 app.get('/api/cursos/:id', async (req, res) => {
     try {
-        const curso = await db.buscarPorId(CursoModel, req.params.id);
+        // Enforce data populate operations over target array arrays
+        const curso = await CursoModel.findById(req.params.id).populate('disciplinas');
         res.json(curso);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
+
+
 
 // Add a discipline to a course timeline schedule
 app.post('/api/cursos/:cursoId/vincular-disciplina', async (req, res) => {
