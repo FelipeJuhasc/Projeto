@@ -105,6 +105,10 @@
             <label style="display: block; margin-bottom: 5px; font-weight: 500;">Nome Completo:</label>
             <input type="text" id="modal-nome" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
         </div>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">RA:</label>
+            <input type="number" id="modal-ra" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+        </div>
 
         <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; font-weight: 500;">Graduação:</label>
@@ -153,20 +157,23 @@
         // 2) MODEL
         // ==========================================
         class Professor {
-            constructor(id, nome, graduacao, ativo) {
+            constructor(id, nome, graduacao, ativo, ra) {
                 this._id        = id;
                 this._nome      = nome;
                 this._graduacao = graduacao;
                 this._ativo     = ativo;
+                this._ra        = ra;
             }
             get id()        { return this._id; }
             get nome()      { return this._nome; }
             get graduacao() { return this._graduacao; }
             get ativo()     { return this._ativo; }
-            
+            get ra()        { return this._ra; }
+
             set nome(v)      { if (v && v.trim().length > 1) this._nome = v.trim(); }
             set graduacao(v) { if (v && v.trim().length > 1) this._graduacao = v.trim(); }
             set ativo(v)     { this._ativo = !!v; }
+            set ra(v)        { if (v > 0 && Number.isInteger(v)) this._ra = v; else console.error('RA inválido:', v); }
         }
         window.Professor = Professor;
 
@@ -192,7 +199,7 @@
                     const url = termo ? `${this._apiUrl}?termo=${termo}` : this._apiUrl;
                     const res = await fetch(url);
                     const data = await res.json();
-                    return data.map(p => new Professor(p._id, p.nome, p.graduacao, p.ativo));
+                    return data.map(p => new Professor(p._id, p.nome, p.graduacao, p.ativo, p.ra));
                 } catch (err) {
                     console.error('Erro ao buscar professores do banco:', err);
                     return [];
@@ -203,22 +210,22 @@
                 try {
                     const res = await fetch(`${this._apiUrl}/${id}`);
                     const p = await res.json();
-                    return p ? new Professor(p._id, p.nome, p.graduacao, p.ativo) : null;
+                    return p ? new Professor(p._id, p.nome, p.graduacao, p.ativo, p.ra) : null;
                 } catch (err) {
                     console.error('Erro ao buscar professor por ID:', err);
                     return null;
                 }
             }
 
-            async adicionar({ nome, graduacao, ativo }) {
+            async adicionar({ nome, graduacao, ativo, ra }) {
                 try {
                     const res = await fetch(this._apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ nome, graduacao, ativo })
+                        body: JSON.stringify({ nome, graduacao, ativo, ra })
                     });
                     const p = await res.json();
-                    return new Professor(p._id, p.nome, p.graduacao, p.ativo);
+                    return new Professor(p._id, p.nome, p.graduacao, p.ativo, p.ra);
                 } catch (err) {
                     console.error('Erro ao adicionar professor:', err);
                     return null;
@@ -285,7 +292,7 @@
                 const statusCor = prof.ativo ? '#1a7a42' : '#c0392b';
 
                 div.innerHTML = `
-                    <strong>${prof.nome}</strong> 
+                    <strong>${prof.nome}</strong> <strong>${prof.ra}</strong> 
                     <span style="font-size: 11px; font-weight: bold; color: ${statusCor}; margin-left: 8px;">(${statusTexto})</span>
                     <br><small>Graduação: ${prof.graduacao} | ID: ${prof.id}</small>
                 `;
@@ -324,6 +331,7 @@
             document.getElementById('modal-nome').value = '';
             document.getElementById('modal-graduacao').value = 'Especialista';
             document.getElementById('modal-ativo').checked = true;
+            document.getElementById('modal-ra').value = '';
         }
 
         function novoProfessor() {
@@ -352,6 +360,7 @@
             document.getElementById('modal-nome').value = prof.nome;
             document.getElementById('modal-graduacao').value = prof.graduacao;
             document.getElementById('modal-ativo').checked = prof.ativo;
+            document.getElementById('modal-ra').value = prof.ra;
 
             abrirModal('editar');
         }
@@ -360,6 +369,7 @@
             const nome = document.getElementById('modal-nome').value.trim();
             const graduacao = document.getElementById('modal-graduacao').value;
             const ativo = document.getElementById('modal-ativo').checked;
+            const ra = parseInt(document.getElementById('modal-ra').value);
 
             if (!nome) {
                 alert('O nome completo do professor é obrigatório.');
@@ -367,12 +377,12 @@
             }
 
             if (modoModal === 'adicionar') {
-                const novo = await router.enviar('professor/adicionar', { nome, graduacao, ativo });
+                const novo = await router.enviar('professor/adicionar', { nome, graduacao, ativo, ra });
                 if (novo) alert(`Professor "${novo.nome}" adicionado com sucesso!`);
             } else if (modoModal === 'editar') {
                 await router.enviar('professor/atualizar', { 
                     id: selecionadoId, 
-                    dados: { nome, graduacao, ativo } 
+                    dados: { nome, graduacao, ativo, ra } 
                 });
             }
 
@@ -409,8 +419,8 @@
             }
 
             const linhas = [
-                'ID\tNome\tGraduação\tStatus',
-                ...lista.map(p => `${p.id}\t${p.nome}\t${p.graduacao}\t${p.ativo ? 'Ativo' : 'Inativo'}`)
+                'ID\tNome\tGraduação\tStatus\tRA',
+                ...lista.map(p => `${p.id}\t${p.nome}\t${p.graduacao}\t${p.ativo ? 'Ativo' : 'Inativo'}\t${p.ra}`)
             ];
 
             const conteudo = linhas.join('\r\n');

@@ -121,7 +121,8 @@ app.get('/', (req, res) => {
 const ProfessorSchema = new mongoose.Schema({
     nome: { type: String, required: true },
     graduacao: { type: String, required: true },
-    ativo: { type: Boolean, default: true } // Mapeado como Boolean para facilitar filtros
+    ativo: { type: Boolean, default: true }, // Mapeado como Boolean para facilitar filtros
+    ra: { type: String, required: true, unique: true } // Número de registro do professor
 });
 
 // Força o Mongoose a usar a coleção singular 'professor' do seu banco 'conexao'

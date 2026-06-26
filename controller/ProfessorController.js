@@ -19,7 +19,7 @@ class ProfessorController {
             const data = await res.json();
             
             // Converte o array do MongoDB em instâncias da classe Professor do seu frontend
-            return data.map(p => new Professor(p._id, p.nome, p.graduacao, p.ativo));
+            return data.map(p => new Professor(p._id, p.nome, p.graduacao, p.ativo, p.ra));
         } catch (err) {
             console.error('Erro ao buscar professores do banco:', err);
             return [];
@@ -30,22 +30,22 @@ class ProfessorController {
         try {
             const res = await fetch(`${this._apiUrl}/${id}`);
             const p = await res.json();
-            return p ? new Professor(p._id, p.nome, p.graduacao, p.ativo) : null;
+            return p ? new Professor(p._id, p.nome, p.graduacao, p.ativo, p.ra) : null;
         } catch (err) {
             console.error('Erro ao buscar professor por ID:', err);
             return null;
         }
     }
 
-    async adicionar({ nome, graduacao, ativo }) {
+    async adicionar({ nome, graduacao, ativo, ra }) {
         try {
             const res = await fetch(this._apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nome, graduacao, ativo })
+                body: JSON.stringify({ nome, graduacao, ativo, ra })
             });
             const p = await res.json();
-            return new Professor(p._id, p.nome, p.graduacao, p.ativo);
+            return new Professor(p._id, p.nome, p.graduacao, p.ativo, p.ra);
         } catch (err) {
             console.error('Erro ao adicionar professor:', err);
             return null;
