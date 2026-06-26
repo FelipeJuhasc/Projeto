@@ -95,6 +95,7 @@
                     <button class="btn btn-editar"   onclick="editarCurso()"  id="btn-editar"  disabled>Editar</button>
                     <button class="btn btn-excluir"  onclick="excluirCurso()" id="btn-excluir" disabled>Excluir</button>
                     <button class="btn btn-exportar" onclick="exportarTXT()">⬇ Exportar TXT</button>
+                       <button class="btn" onclick="gerenciarCronograma()" id="btn-cronograma" style="background: #9C27B0; color: white;" disabled>📅 Cronograma</button>               
                 </div>
             </div>
 
@@ -177,6 +178,37 @@
         </div>
     </div>
 </div>
+
+        <!-- SYSTEM TIMELINE SCHEDULE MANAGEMENT MODAL -->
+        <div id="schedule-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1050; justify-content: center; align-items: center;">
+    <div style="background: white; padding: 25px; border-radius: 8px; width: 100%; max-width: 600px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); max-height: 85vh; display: flex; flex-direction: column;">
+        
+        <h2 id="schedule-modal-title" style="margin-bottom: 10px; color: #2c3e50;">Cronograma do Curso</h2>
+        <p id="schedule-course-info" style="font-size: 13px; color: #666; margin-bottom: 20px; font-weight: bold;"></p>
+        
+        <!-- DROP-DOWN INTERFACE CONTROLLER SELECTION -->
+        <div style="background: #f4f6f8; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
+            <label style="font-weight: bold; color: #333; font-size: 14px;">Agendar Nova Disciplina neste Curso:</label>
+            <div style="display: flex; gap: 10px;">
+                <select id="dropdown-disciplinas" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; background: white;">
+                    <option value="">Carregando disciplinas disponíveis...</option>
+                </select>
+                <button class="btn btn-novo" onclick="adicionarDisciplinaAoCronograma()" style="white-space: nowrap; font-weight: bold;">+ Adicionar</button>
+            </div>
+        </div>
+
+        <!-- TIMELINE GRID LAYOUT -->
+        <label style="font-weight: bold; color: #333; margin-bottom: 8px; font-size: 14px;">Disciplinas Atualmente Agendadas:</label>
+        <div id="schedule-list-container" style="flex: 1; overflow-y: auto; border: 1px solid #eee; border-radius: 4px; padding: 10px; background: #fafafa; margin-bottom: 20px;">
+            <!-- Appended elements render dynamically here -->
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button class="btn" style="background: #e0e0e0; color: #333; font-weight: bold;" onclick="fecharScheduleModal()">Fechar</button>
+        </div>
+    </div>
+        </div>
+
 
 
         <!-- COMBINED APPLICATION SCRIPTS (ROUTER, MODEL, CONTROLLER, VIEW) -->
@@ -527,6 +559,132 @@
             a.click();
             URL.revokeObjectURL(url);
         }
+                // ==========================================
+        // DYNAMIC DROPDOWN SCHEDULE ACTION SCRIPTS
+        // ==========================================
+        let cursoEmEdicaoObjeto = null;
+
+        // Opens the layout framework window layer
+        async function gerenciarCronograma() {
+            if (!selecionadoId) return;
+
+            // Fetch the populated course profile record from your MongoDB instance
+            cursoEmEdicaoObjeto = await router.enviar('curso/buscarPorId', selecionadoId);
+            if (!cursoEmEdicaoObjeto) return;
+
+            document.getElementById('schedule-course-info').innerText = `Instituição: ${cursoEmEdicaoObjeto.CursoInst} | ID: ${cursoEmEdicaoObjeto.id}`;
+            document.getElementById('schedule-modal').style.display = 'flex';
+
+            // Bootstrap dropdown values and data rows concurrently
+            await alimentarDropdownOpcoes();
+            await renderizarGradeCronograma();
+        }
+
+        function fecharScheduleModal() {
+            document.getElementById('schedule-modal').style.display = 'none';
+            cursoEmEdicaoObjeto = null;
+            filtrarCursos(); // Refresh parent listings dashboard tracking indicators
+        }
+
+        // Populates the dropdown menu with records found inside the database instance
+        async function alimentarDropdownOpcoes() {
+            const selectElement = document.getElementById('dropdown-disciplinas');
+            selectElement.innerHTML = '<option value="">Buscando disciplinas no banco...</option>';
+
+            try {
+                // Fetch the disciplines dataset directly from the system router pipeline
+                const todasDisciplinas = await router.enviar('disciplina/listar', '');
+                
+                if (!todasDisciplinas || todasDisciplinas.length === 0) {
+                    selectElement.innerHTML = '<option value="">Nenhuma disciplina encontrada no sistema.</option>';
+                    return;
+                }
+
+                let optionsHTML = '<option value="">-- Selecione uma Disciplina para Inserir --</option>';
+                todasDisciplinas.forEach(d => {
+                    optionsHTML += `<option value="${d.id}">[${d.CodDisc}] C.H: ${d.CargH}h - Prof: ${d.MatProf}</option>`;
+                });
+                selectElement.innerHTML = optionsHTML;
+            } catch (err) {
+                console.error("Erro ao alimentar dropdown:", err);
+                selectElement.innerHTML = '<option value="">Erro ao carregar opções.</option>';
+            }
+        }
+
+        // Renders the sub-grid visualization tracking schedule elements 
+        async function renderizarGradeCronograma() {
+            const container = document.getElementById('schedule-list-container');
+            container.innerHTML = '';
+
+            // Fetch the updated course details using the regular endpoint to read the fresh array array
+            const cursoAtualizado = await router.enviar('curso/buscarPorId', selecionadoId);
+            
+            // Render an empty layout if the database references collection returned clear
+            if (!cursoAtualizado || !cursoAtualizado.disciplinas || cursoAtualizado.disciplinas.length === 0) {
+                container.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">Nenhuma disciplina vinculada a este cronograma.</p>';
+                return;
+            }
+
+            let gridHTML = '';
+            
+            // Loop through references array items provided by your backend model pipeline
+            // Since the database returns standard JSON documents inside our reference array, parse fields directly
+            cursoAtualizado.disciplinas.forEach((d, index) => {
+                gridHTML += `
+                    <div style="background: white; border: 1px solid #ddd; border-radius: 6px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong style="color: #2c3e50; font-size: 14px;">${index + 1}. Código: ${d.CodDisc}</strong>
+                            <br><small style="color: #666;">Carga Horária: ${d.CargH}h | Turma: ${d.N} | Prof: ${d.MatProf}</small>
+                        </div>
+                        <button class="btn btn-excluir" onclick="removerDisciplinaDoCronograma('${d._id || d.id}')" style="padding: 4px 10px; font-size: 12px;">Remover</button>
+                    </div>
+                `;
+            });
+            container.innerHTML = gridHTML;
+        }
+
+        // Submits an update payload sequence to insert an object link inside MongoDB
+        async function adicionarDisciplinaAoCronograma() {
+            const selectElement = document.getElementById('dropdown-disciplinas');
+            const disciplinaId = selectElement.value;
+
+            if (!disciplinaId) {
+                alert('Selecione uma disciplina válida na lista suspensa antes de adicionar!');
+                return;
+            }
+
+            // Fire an asynchronous transmission directly down the pipeline architecture model
+            const resultado = await router.enviar('curso/vincular', { 
+                cursoId: selecionadoId, 
+                disciplinaId: disciplinaId 
+            });
+
+            if (resultado && resultado.success) {
+                selectElement.value = ''; // Reset the dropdown interface field wrapper
+                await renderizarGradeCronograma(); // Re-render target elements asynchronously
+            } else {
+                alert('Erro ao vincular disciplina ao cronograma na nuvem.');
+            }
+        }
+
+        // Removes a relational object reference connection link
+        async function removerDisciplinaDoCronograma(disciplinaId) {
+            if (!disciplinaId) return;
+            
+            if (confirm('Tem certeza que deseja remover esta disciplina do cronograma deste curso?')) {
+                const resultado = await router.enviar('curso/desvincular', { 
+                    cursoId: selecionadoId, 
+                    disciplinaId: disciplinaId 
+                });
+
+                if (resultado && resultado.success) {
+                    await renderizarGradeCronograma();
+                } else {
+                    alert('Falha ao desvincular o item solicitado do servidor.');
+                }
+            }
+        }
+
 
         document.addEventListener('DOMContentLoaded', filtrarCursos);
 
