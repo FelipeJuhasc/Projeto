@@ -251,10 +251,23 @@
         }
 
         function selecionarDisciplina(id) {
-            selecionadoId = (selecionadoId === id) ? null : id;
-            atualizarBotoes();
-            filtrarDisciplinas();
+    selecionadoId = (selecionadoId === id) ? null : id;
+    
+    // 1. Atualiza o estado visual de desativado/ativado dos botões
+    atualizarBotoes();
+    
+    // 2. CORREÇÃO: Altera apenas a classe CSS na tela de forma ultra rápida, sem ir ao banco
+    const itens = document.querySelectorAll('.disciplina-item');
+    itens.forEach(item => {
+        // Se o item contiver o ID selecionado atual, aplica o fundo azul de destaque
+        if (item.onclick.toString().includes(`'${id}'`) && selecionadoId !== null) {
+            item.classList.add('selecionado');
+        } else {
+            item.classList.remove('selecionado');
         }
+    });
+}
+
 
         function atualizarBotoes() {
             const hab = selecionadoId !== null;
