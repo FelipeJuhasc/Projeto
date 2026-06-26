@@ -36,6 +36,7 @@ class DisciplinaController {
         // Mapeia o resultado retornado do MongoDB Atlas
         return data.map(d => new Disciplina(
             d._id, d.CodDisc, d.DTini, d.DTfim, d.N, d.CargH, d.Controle, d.Obrig, d.MatProf
+            
         ));
     } catch (err) {
         console.error('Erro ao buscar disciplinas no banco:', err);
