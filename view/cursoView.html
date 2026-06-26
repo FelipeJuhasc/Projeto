@@ -617,6 +617,7 @@
 }
 
 
+        // Renders the sub-grid visualization tracking schedule elements 
         async function renderizarGradeCronograma() {
     const container = document.getElementById('schedule-list-container');
     container.innerHTML = '<p style="text-align: center; color: #999;">Carregando cronograma...</p>';
@@ -682,35 +683,6 @@
     container.innerHTML = gridHTML;
 }
 
-            const container = document.getElementById('schedule-list-container');
-            container.innerHTML = '';
-
-            // Fetch the updated course details using the regular endpoint to read the fresh array array
-            const cursoAtualizado = await router.enviar('curso/buscarPorId', selecionadoId);
-            
-            // Render an empty layout if the database references collection returned clear
-            if (!cursoAtualizado || !cursoAtualizado.disciplinas || cursoAtualizado.disciplinas.length === 0) {
-                container.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">Nenhuma disciplina vinculada a este cronograma.</p>';
-                return;
-            }
-
-            let gridHTML = '';
-            
-            // Loop through references array items provided by your backend model pipeline
-            // Since the database returns standard JSON documents inside our reference array, parse fields directly
-            cursoAtualizado.disciplinas.forEach((d, index) => {
-                gridHTML += `
-                    <div style="background: white; border: 1px solid #ddd; border-radius: 6px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <strong style="color: #2c3e50; font-size: 14px;">${index + 1}. Código: ${d.CodDisc}</strong>
-                            <br><small style="color: #666;">Carga Horária: ${d.CargH}h | Turma: ${d.N} | Prof: ${d.MatProf}</small>
-                        </div>
-                        <button class="btn btn-excluir" onclick="removerDisciplinaDoCronograma('${d._id || d.id}')" style="padding: 4px 10px; font-size: 12px;">Remover</button>
-                    </div>
-                `;
-            });
-            container.innerHTML = gridHTML;
-        }
 
         // Submits an update payload sequence to insert an object link inside MongoDB
         async function adicionarDisciplinaAoCronograma() {
