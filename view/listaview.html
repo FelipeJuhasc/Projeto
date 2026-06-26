@@ -251,22 +251,30 @@
         }
 
         function selecionarDisciplina(id) {
+    // Se clicar no que já estava selecionado, desmarca. Se não, guarda o novo ID.
     selecionadoId = (selecionadoId === id) ? null : id;
     
-    // 1. Atualiza o estado visual de desativado/ativado dos botões
+    // 1. Atualiza o estado de ativo/desativado dos botões Editar e Excluir
     atualizarBotoes();
     
-    // 2. CORREÇÃO: Altera apenas a classe CSS na tela de forma ultra rápida, sem ir ao banco
+    // 2. CORREÇÃO VISUAL: Atualiza as classes na tela sem fazer requisições ao banco
     const itens = document.querySelectorAll('.disciplina-item');
     itens.forEach(item => {
-        // Se o item contiver o ID selecionado atual, aplica o fundo azul de destaque
-        if (item.onclick.toString().includes(`'${id}'`) && selecionadoId !== null) {
-            item.classList.add('selecionado');
-        } else {
-            item.classList.remove('selecionado');
-        }
+        // Remove o destaque de todos primeiro para limpar a tela
+        item.classList.remove('selecionado');
     });
+
+    // Se um item foi efetivamente selecionado, adiciona o destaque visual nele
+    if (selecionadoId !== null) {
+        // Localiza todos os cards na tela e destaca o que possui o ID correspondente
+        itens.forEach(item => {
+            if (item.getAttribute('data-id') === id) {
+                item.classList.add('selecionado');
+            }
+        });
+    }
 }
+
 
 
         function atualizarBotoes() {
