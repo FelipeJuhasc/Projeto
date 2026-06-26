@@ -529,17 +529,18 @@ async function editarDisciplina() {
         }
 
         // CORREÇÃO: Garante o carregamento em ordem sem travar a tela
-        document.addEventListener('DOMContentLoaded', async () => {
-             try {
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
         // 1. Alimenta o dropdown em segundo plano para o modal já ficar pronto
-           await alimentarDropdownProfessores();
-        } catch (e) {
-             console.warn("Dropdown de professores não pôde ser alimentado agora:", e);
-         }
+        await alimentarDropdownProfessores();
+    } catch (e) {
+        console.warn("Dropdown de professores não pôde ser alimentado agora:", e);
+    }
     
     // 2. Chama a listagem das disciplinas do MongoDB de forma limpa
-             await filtrarDisciplinas();
-        });
+    await filtrarDisciplinas();
+});
+
 
     </script>
 </body>
