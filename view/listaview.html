@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Disciplinaes</title>
     <link rel="stylesheet" href="../index.css">
-    <script src="./controleAcesso.js"></script>
+    
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
@@ -163,7 +163,7 @@
      </div>
     </div>
 
-    <!-- Força o navegador a recarregar as atualizações da interface de disciplinas -->
+    <script src="./controleAcesso.js"></script>
     <script src="/controller/DisciplinaController.js?v=1.0.8"></script>
 
         <!-- COMBINED APPLICATION SCRIPTS (ROUTER, MODEL, CONTROLLER, VIEW) -->
@@ -209,108 +209,7 @@
         }
         window.Disciplina = Disciplina;
 
-        // ==========================================
-        // 3) CONTROLLER
-        // ==========================================
-        class DisciplinaController {
-            constructor() {
-                this._apiUrl = '/api/disciplinas';
-                this._registrarRotas();
-            }
-
-            _registrarRotas() {
-                router.registrar('disciplina/listar',      async (termo)   => await this.getAll(termo));
-                router.registrar('disciplina/buscarPorId', async (id)      => await this.buscarPorId(id));
-                router.registrar('disciplina/adicionar',   async (dados)   => await this.adicionar(dados));
-                router.registrar('disciplina/atualizar',   async (payload) => await this.atualizar(payload.id, payload.dados));
-                router.registrar('disciplina/excluir',     async (id)      => await this.excluir(id));
-                router.registrar('curso/vincular', async (p) => await this.vincularDisciplina(p.cursoId, p.disciplinaId));
-                router.registrar('curso/desvincular', async (p) => await this.desvincularDisciplina(p.cursoId, p.disciplinaId));
-
-            }
-
-                        async getAll(filtros = '') {
-                try {
-                    let termo = '';
-                    let dtIni = '';
-                    let dtFim = '';
-
-                    // Properly detect if filters are coming from the new date interface object
-                    if (typeof filtros === 'object' && filtros !== null) {
-                        termo = filtros.termo || '';
-                        dtIni = filtros.dtIni || '';
-                        dtFim = filtros.dtFim || '';
-                    } else {
-                        termo = filtros || '';
-                    }
-
-                    // Build a valid cloud query parameter string 
-                    const url = `${this._apiUrl}?termo=${encodeURIComponent(termo)}&dtIni=${dtIni}&dtFim=${dtFim}`;
-                    
-                    const res = await fetch(url);
-                    const data = await res.json();
-                    return data.map(d => new Disciplina(d._id, d.CodDisc, d.DTini, d.DTfim, d.N, d.CargH, d.Controle, d.Obrig, d.MatProf));
-                } catch (err) {
-                    console.error('Erro ao buscar disciplinas:', err);
-                    return [];
-                }
-            }
-
-
-            async buscarPorId(id) {
-                try {
-                    const res = await fetch(`${this._apiUrl}/${id}`);
-                    const d = await res.json();
-                    return d ? new Disciplina(d._id, d.CodDisc, d.DTini, d.DTfim, d.N, d.CargH, d.Controle, d.Obrig, d.MatProf) : null;
-                } catch (err) {
-                    console.error('Erro ao buscar disciplina por ID:', err);
-                    return null;
-                }
-            }
-
-            async adicionar(dados) {
-                try {
-                    const res = await fetch(this._apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(dados)
-                    });
-                    const d = await res.json();
-                    return new Disciplina(d._id, d.CodDisc, d.DTini, d.DTfim, d.N, d.CargH, d.Controle, d.Obrig, d.MatProf);
-                } catch (err) {
-                    console.error('Erro ao adicionar disciplina:', err);
-                    return null;
-                }
-            }
-
-            async atualizar(id, dados) {
-                try {
-                    const res = await fetch(`${this._apiUrl}/${id}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(dados)
-                    });
-                    return res.ok;
-                } catch (err) {
-                    console.error('Erro ao atualizar disciplina:', err);
-                    return false;
-                }
-            }
-
-            async excluir(id) {
-                try {
-                    const res = await fetch(`${this._apiUrl}/${id}`, {
-                        method: 'DELETE'
-                    });
-                    return res.ok;
-                } catch (err) {
-                    console.error('Erro ao excluir disciplina:', err);
-                    return false;
-                }
-            }
-        }
-        window.disciplinaController = new DisciplinaController();
-
+ 
         // ==========================================
         // 4) VIEW
         // ==========================================
