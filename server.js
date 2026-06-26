@@ -198,9 +198,8 @@ const DisciplinaSchema = new mongoose.Schema({
     MatProf:  { type: String, required: true } // Guarda o ID/Matrícula do professor vinculado
 });
 
-// CERTIFIQUE-SE: Mude para 'disciplina' se a sua coleção no Atlas não tiver o 'n' extra!
-const SEU_NOME_COLECAO_ATLAS = 'discinplina'; 
-const DisciplinaModel = mongoose.model('Disciplina', DisciplinaSchema, SEU_NOME_COLECAO_ATLAS);
+const DisciplinaModel = mongoose.model('Disciplina', DisciplinaSchema, 'discinplina');
+
 
 
 // =================================================================
@@ -217,9 +216,9 @@ app.get('/api/disciplinas', async (req, res) => {
 
         // Validação estrita de strings de calendário vindas da Toolbar do Frontend
         // Substitua a verificação antiga por esta linha muito mais segura no seu server.js:
-if (dtIni && dtIni.trim() !== "" && dtIni !== "undefined" && dtIni !== "[object Object]" || 
-    dtFim && dtFim.trim() !== "" && dtFim !== "undefined" && dtFim !== "[object Object]") {
- {
+        if (dtIni && dtIni.trim() !== "" && dtIni !== "undefined" && dtIni !== "[object Object]" || 
+            dtFim && dtFim.trim() !== "" && dtFim !== "undefined" && dtFim !== "[object Object]") {
+        
             condicao.$and = [];
             
             if (dtIni && dtIni.trim() !== "") {
