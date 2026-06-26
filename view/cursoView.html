@@ -591,28 +591,31 @@
         
         // Populates the dropdown menu with records found inside the database instance
         async function alimentarDropdownOpcoes() {
-            const selectElement = document.getElementById('dropdown-disciplinas');
-            selectElement.innerHTML = '<option value="">Buscando disciplinas no banco...</option>';
+    const selectElement = document.getElementById('dropdown-disciplinas');
+    selectElement.innerHTML = '<option value="">Buscando disciplinas no banco...</option>';
 
-            try {
-                const res = await fetch('/api/disciplinas');
-                const todasDisciplinas = await res.json();
-                
-                if (!todasDisciplinas || todasDisciplinas.length === 0) {
-                    selectElement.innerHTML = '<option value="">Nenhuma disciplina encontrada no sistema.</option>';
-                    return;
-                }
-
-                let optionsHTML = '<option value="">-- Selecione uma Disciplina para Inserir --</option>';
-                todasDisciplinas.forEach(d => {
-                    optionsHTML += `<option value="${d.id}">[${d.CodDisc}] C.H: ${d.CargH}h - Prof: ${d.MatProf}</option>`;
-                });
-                selectElement.innerHTML = optionsHTML;
-            } catch (err) {
-                console.error("Erro ao alimentar dropdown:", err);
-                selectElement.innerHTML = '<option value="">Erro ao carregar opções.</option>';
-            }
+    try {
+        const res = await fetch('/api/disciplinas');
+        const todasDisciplinas = await res.json();
+        
+        if (!todasDisciplinas || todasDisciplinas.length === 0) {
+            selectElement.innerHTML = '<option value="">Nenhuma disciplina encontrada no sistema.</option>';
+            return;
         }
+
+        let optionsHTML = '<option value="">-- Selecione uma Disciplina para Inserir --</option>';
+        todasDisciplinas.forEach(d => {
+            // CORREÇÃO: Garante o uso de d._id (padrão nativo do MongoDB Atlas)
+            const idReal = d._id || d.id;
+            optionsHTML += `<option value="${idReal}">[${d.CodDisc}] C.H: ${d.CargH}h - Turma: ${d.N} - Prof: ${d.MatProf}</option>`;
+        });
+        selectElement.innerHTML = optionsHTML;
+    } catch (err) {
+        console.error("Erro ao alimentar dropdown de disciplinas:", err);
+        selectElement.innerHTML = '<option value="">Erro ao carregar opções da API.</option>';
+    }
+}
+
 
         // Renders the sub-grid visualization tracking schedule elements 
         async function renderizarGradeCronograma() {
@@ -647,32 +650,7 @@
         }
 
         // Submits an update payload sequence to insert an object link inside MongoDB
-        async function alimentarDropdownOpcoes() {
-    const selectElement = document.getElementById('dropdown-disciplinas');
-    selectElement.innerHTML = '<option value="">Buscando disciplinas no banco...</option>';
-
-    try {
-        const res = await fetch('/api/disciplinas');
-        const todasDisciplinas = await res.json();
-        
-        if (!todasDisciplinas || todasDisciplinas.length === 0) {
-            selectElement.innerHTML = '<option value="">Nenhuma disciplina encontrada no sistema.</option>';
-            return;
-        }
-
-        let optionsHTML = '<option value="">-- Selecione uma Disciplina para Inserir --</option>';
-        todasDisciplinas.forEach(d => {
-            // CORREÇÃO: Garante o uso de d._id (padrão nativo do MongoDB Atlas)
-            const idReal = d._id || d.id;
-            optionsHTML += `<option value="${idReal}">[${d.CodDisc}] C.H: ${d.CargH}h - Turma: ${d.N} - Prof: ${d.MatProf}</option>`;
-        });
-        selectElement.innerHTML = optionsHTML;
-    } catch (err) {
-        console.error("Erro ao alimentar dropdown de disciplinas:", err);
-        selectElement.innerHTML = '<option value="">Erro ao carregar opções da API.</option>';
-    }
-}
-
+        async function adicionarDisciplinaAoCronograma() {
           const selectElement = document.getElementById('dropdown-disciplinas');
             const disciplinaId = selectElement.value;
 
