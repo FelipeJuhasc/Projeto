@@ -362,14 +362,18 @@
 
 
         async function filtrarDisciplinas() {
-            const termo = document.getElementById('search-input').value;
-            const dtIni = document.getElementById('filter-dt-ini').value;
-            const dtFim = document.getElementById('filter-dt-fim').value;
+    const termo = document.getElementById('search-input').value;
+    const dtIni = document.getElementById('filter-dt-ini').value;
+    const dtFim = document.getElementById('filter-dt-fim').value;
 
-            // Constrói os parâmetros dinamicamente na rota da controller
-            const lista = await router.enviar('disciplina/listar', { termo, dtIni, dtFim });
-             renderDisciplinas(lista);
-        }
+    console.log("[DEBUG VIEW] Disparando filtro de disciplinas via Router...");
+    
+    // Dispara a consulta para a rota registrada pela controller externa
+    const lista = await router.enviar('disciplina/listar', { termo, dtIni, dtFim });
+    
+    // Envia o array de volta para a função de desenho da grade
+    await renderDisciplinas(lista);
+}
 
 // Pequeno ajuste necessário na Controller para receber o objeto com os filtros
 // Altere o método getAll dentro da sua DisciplinaController para ler o objeto:
@@ -534,7 +538,15 @@
 
                 // Garanta que a sua inicialização ao abrir a página esteja exatamente assim:
         // No final do seu controleAcesso.js, certifique-se de que tenha apenas isso:
-document.addEventListener('DOMContentLoaded', verificarPermissoesTela);
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        await alimentarDropdownProfessores();
+    } catch (e) {
+        console.warn("Aviso: Dropdown de professores indisponível na inicialização:", e);
+    }
+    // Roda a primeira busca automática trazendo as disciplinas salvas no Atlas
+    await filtrarDisciplinas();
+});
 
 
 
