@@ -216,7 +216,10 @@ app.get('/api/disciplinas', async (req, res) => {
         }
 
         // Validação estrita de strings de calendário vindas da Toolbar do Frontend
-        if ((dtIni && dtIni.trim() !== "") || (dtFim && dtFim.trim() !== "")) {
+        // Substitua a verificação antiga por esta linha muito mais segura no seu server.js:
+if (dtIni && dtIni.trim() !== "" && dtIni !== "undefined" && dtIni !== "[object Object]" || 
+    dtFim && dtFim.trim() !== "" && dtFim !== "undefined" && dtFim !== "[object Object]") {
+ {
             condicao.$and = [];
             
             if (dtIni && dtIni.trim() !== "") {
