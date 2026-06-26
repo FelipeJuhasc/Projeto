@@ -67,6 +67,49 @@
         .disciplina-item small       { color: #777; font-size: 13px; }
         .lista-vazia { color: #999; text-align: center; padding: 30px; }
     </style>
+        <!-- INICIALIZAÇÃO PREVENTIVA DE MODELOS E ROUTER -->
+    <script>
+        class Router {
+            constructor() { this._rotas = {}; }
+            registrar(rota, fn) { this._rotas[rota] = fn; }
+            async enviar(rota, dados) {
+                const fn = this._rotas[rota];
+                if (!fn) { console.error('[Router] Rota não encontrada:', rota); return null; }
+                return await fn(dados);
+            }
+        }
+        // Registra o roteador global imediatamente na abertura da página
+        if (!window.router) {
+            window.router = new Router();
+        }
+
+        // Classe Disciplina Global
+        class Disciplina {
+            constructor(id, CodDisc, DTini, DTfim, N, CargH, Controle, Obrig, MatProf) {
+                this._id = id;
+                this._CodDisc = CodDisc;
+                this._DTini = DTini;
+                this._DTfim = DTfim;
+                this._N = Number(N);
+                this._CargH = Number(CargH);
+                this._Controle = Controle;
+                this._Obrig = !!Obrig;
+                this._MatProf = MatProf;
+            }
+            get id()       { return this._id; }
+            get CodDisc()  { return this._CodDisc; }
+            get DTini()    { return this._DTini; }
+            get DTfim()    { return this._DTfim; }
+            get N()        { return this._N; }
+            get CargH()    { return this._CargH; }
+            get Controle() { return this._Controle; }
+            get Obrig()    { return this._Obrig; }
+            get MatProf()  { return this._MatProf; }
+        }
+        window.Disciplina = Disciplina;
+    </script>
+</head>
+
 </head>
 <body>
 
@@ -163,11 +206,16 @@
      </div>
     </div>
 
-    <script src="./controleAcesso.js"></script>
-    <script src="/controller/DisciplinaController.js?v=1.0.8"></script>
+    <!-- Força o navegador a buscar a nova versão limpa do script externo -->
+<script src="/controller/DisciplinaController.js?v=2.0.0"></script>
+
+<!-- Importação da segurança por último -->
+<script src="/view/controleAcesso.js"></script>
+
 
         <!-- COMBINED APPLICATION SCRIPTS (ROUTER, MODEL, CONTROLLER, VIEW) -->
     <script>
+        
         // ==========================================
         // 1) ROUTER
         // ==========================================
@@ -485,17 +533,9 @@
         }
 
                 // Garanta que a sua inicialização ao abrir a página esteja exatamente assim:
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                // Alimenta o dropdown em segundo plano para o modal já ficar pronto
-                await alimentarDropdownProfessores();
-            } catch (e) {
-                console.warn("Dropdown de professores não pôde ser alimentado na inicialização:", e);
-            }
-            
-            // Renderiza as disciplinas do MongoDB Atlas na tela
-            await filtrarDisciplinas();
-        });
+        // No final do seu controleAcesso.js, certifique-se de que tenha apenas isso:
+document.addEventListener('DOMContentLoaded', verificarPermissoesTela);
+
 
 
     </script>
