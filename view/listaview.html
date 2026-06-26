@@ -229,7 +229,7 @@
                 
                 let nomeProf = 'Não atribuído';
                 if (disc.MatProf) {
-                    if (typeof disc.MatProf === 'object' && disc.MatProf.nome) {
+                    if (typeof disc.MatProf === 'object' && disc.MatProf.nome && disc.MatProf.ativo === true) {
                         nomeProf = disc.MatProf.nome;
                     } else {
                         const p = professores.find(p => (p._id || p.id) === disc.MatProf.toString());
