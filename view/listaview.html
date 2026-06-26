@@ -423,49 +423,11 @@
             document.getElementById('modal-Obrig').checked = true;
         }
 
-        function novoDisciplina() {
-            const permissao = localStorage.getItem('usuarioPermissao');
-             if (permissao === 'visao' || permissao === 'edicao') {
-              alert('Seu nível de acesso não permite adicionar disciplinas.');
-            return;
-    }
-    document.getElementById('modal-title').innerText = "Adicionar Disciplina";
-    
-    // Abre o modal e preenche as opções reais de professores cadastrados
-    abrirModal('adicionar');
-    alimentarDropdownProfessores(); 
-}
+                // ==========================================
+        // DYNAMIC DROPDOWN & MODAL ACTION CONTROLLERS
+        // ==========================================
 
-async function editarDisciplina() {
-    const permissao = localStorage.getItem('usuarioPermissao');
-    if (permissao === 'visao') {
-        alert('Seu nível de acesso não permite editar disciplinas.');
-        return;
-    }
-    if (!selecionadoId) return;
-
-    const disc = await router.enviar('disciplina/buscarPorId', selecionadoId);
-    if (!disc) return;
-
-    document.getElementById('modal-title').innerText = "Editar Disciplina";
-    document.getElementById('modal-CodDisc').value = disc.CodDisc;
-    document.getElementById('modal-DTini').value = formatarDataInput(disc.DTini);
-    document.getElementById('modal-DTfim').value = formatarDataInput(disc.DTfim);
-    document.getElementById('modal-N').value = disc.N;
-    document.getElementById('modal-CargH').value = disc.CargH;
-    document.getElementById('modal-Controle').value = disc.Controle;
-    document.getElementById('modal-Obrig').checked = disc.Obrig;
-
-    // 1. Primeiro carrega a lista completa de opções vindas da API de professores
-    await alimentarDropdownProfessores();
-    
-    // 2. Depois trava a seleção exatamente na matrícula que já estava salva neste documento
-    document.getElementById('modal-MatProf').value = disc.MatProf;
-
-    abrirModal('editar');
-}
-
-       async function alimentarDropdownProfessores() {
+        async function alimentarDropdownProfessores() {
             const selectElement = document.getElementById('modal-MatProf');
             
             // Se o modal ainda não existir ou o ID estiver errado na tela, sai sem travar o resto do código
@@ -498,6 +460,49 @@ async function editarDisciplina() {
                 selectElement.innerHTML = '<option value="">Erro ao carregar lista de professores da API.</option>';
             }
         }
+
+        // DECLARAÇÃO ÚNICA: Abre o modal limpo para inserção de novas disciplinas
+        function novoDisciplina() {
+            const permissao = localStorage.getItem('usuarioPermissao');
+            if (permissao === 'visao' || permissao === 'edicao') {
+                alert('Seu nível de acesso não permite adicionar disciplinas.');
+                return;
+            }
+            document.getElementById('modal-title').innerText = "Adicionar Disciplina";
+            
+            abrirModal('adicionar');
+            alimentarDropdownProfessores(); 
+        }
+
+        async function editarDisciplina() {
+            const permissao = localStorage.getItem('usuarioPermissao');
+            if (permissao === 'visao') {
+                alert('Seu nível de acesso não permite editar disciplinas.');
+                return;
+            }
+            if (!selecionadoId) return;
+
+            const disc = await router.enviar('disciplina/buscarPorId', selecionadoId);
+            if (!disc) return;
+
+            document.getElementById('modal-title').innerText = "Editar Disciplina";
+            document.getElementById('modal-CodDisc').value = disc.CodDisc;
+            document.getElementById('modal-DTini').value = formatarDataInput(disc.DTini);
+            document.getElementById('modal-DTfim').value = formatarDataInput(disc.DTfim);
+            document.getElementById('modal-N').value = disc.N;
+            document.getElementById('modal-CargH').value = disc.CargH;
+            document.getElementById('modal-Controle').value = disc.Controle;
+            document.getElementById('modal-Obrig').checked = disc.Obrig;
+
+            // 1. Primeiro carrega a lista completa de opções vindas da API de professores
+            await alimentarDropdownProfessores();
+            
+            // 2. Depois trava a seleção exatamente na matrícula que já estava salva neste documento
+            document.getElementById('modal-MatProf').value = disc.MatProf;
+
+            abrirModal('editar');
+        }
+
 
         async function exportarTXT() {
             const termo = document.getElementById('search-input').value;
