@@ -617,24 +617,24 @@
 }
 
 
-       async function renderizarGradeCronograma() {
-    const container = document.getElementById('schedule-list-container');
-    container.innerHTML = '<p style="text-align: center; color: #999;">Carregando cronograma...</p>';
+    async function renderizarGradeCronograma() {
+        const container = document.getElementById('schedule-list-container');
+        container.innerHTML = '<p style="text-align: center; color: #999;">Carregando cronograma...</p>';
 
-    const resCurso = await fetch(`/api/cursos/${selecionadoId}`);
-    const cursoAtualizado = await resCurso.json();
+        const resCurso = await fetch(`/api/cursos/${selecionadoId}`);
+        const cursoAtualizado = await resCurso.json();
     
-    if (!cursoAtualizado || !cursoAtualizado.disciplinas || cursoAtualizado.disciplinas.length === 0) {
-        container.innerHTML = '<p class="lista-vazia" style="color: #999; text-align: center; padding: 20px;">Nenhuma disciplina vinculada a este cronograma.</p>';
-        return;
-    }
+        if (!cursoAtualizado || !cursoAtualizado.disciplinas || cursoAtualizado.disciplinas.length === 0) {
+            container.innerHTML = '<p class="lista-vazia" style="color: #999; text-align: center; padding: 20px;">Nenhuma disciplina vinculada a este cronograma.</p>';
+         return;
+        }
 
-    // Ordena o array no front-end pelo número da ordem de rotação antes de desenhar na tela
-    cursoAtualizado.disciplinas.sort((a, b) => a.ordem - b.ordem);
+        // Ordena o array no front-end pelo número da ordem de rotação antes de desenhar na tela
+        cursoAtualizado.disciplinas.sort((a, b) => a.ordem - b.ordem);
 
-    let gridHTML = '';
+        let gridHTML = '';
     
-    cursoAtualizado.disciplinas.forEach((item) => {
+        cursoAtualizado.disciplinas.forEach((item) => {
         // Como o Mongoose populou, os dados da disciplina estão dentro de item.disciplinaId
         const dadosItem = item.disciplinaId;
         if (!dadosItem) return;
@@ -671,10 +671,10 @@
                 </div>
             </div>
         `;
-    });
+        });
 
-    container.innerHTML = gridHTML;
-}
+        container.innerHTML = gridHTML;
+    }
 
 // NOVA FUNÇÃO: ATUALIZA A ROTAÇÃO E A DECLARAÇÃO DE FIXO NO MONGO
 async function salvarPropriedadesDisciplina(disciplinaId) {

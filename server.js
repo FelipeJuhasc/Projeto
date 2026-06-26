@@ -400,9 +400,19 @@ app.post('/api/cursos/:cursoId/desvincular-disciplina', async (req, res) => {
         const { cursoId } = req.params;
         const { disciplinaId } = req.body;
 
+        // Remove o item se ele for um ID puro (modelo antigo) OU se estiver dentro da propriedade disciplinaId (modelo novo)
         const cursoAtualizado = await CursoModel.findByIdAndUpdate(
             cursoId,
-            { $pull: { disciplinas: { disciplinaId: disciplinaId } } },
+            { 
+                $pull: { 
+                    disciplinas: {
+                        $or: [
+                            { $eq: disciplinaId },
+                            { disciplinaId: disciplinaId }
+                        ]
+                    }
+                } 
+            },
             { new: true }
         ).populate('disciplinas.disciplinaId');
 
@@ -411,6 +421,7 @@ app.post('/api/cursos/:cursoId/desvincular-disciplina', async (req, res) => {
         res.status(500).json({ success: false, message: err.message });
     }
 });
+
 
 
 
