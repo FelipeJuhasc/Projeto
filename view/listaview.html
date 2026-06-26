@@ -164,7 +164,7 @@
     </div>
 
     <!-- Força o navegador a recarregar as atualizações da interface de disciplinas -->
-<script src="/controller/DisciplinaController.js?v=1.0.8"></script>
+    <script src="/controller/DisciplinaController.js?v=1.0.8"></script>
 
         <!-- COMBINED APPLICATION SCRIPTS (ROUTER, MODEL, CONTROLLER, VIEW) -->
     <script>
@@ -422,10 +422,10 @@
         }
 
         function novoDisciplina() {
-    const permissao = localStorage.getItem('usuarioPermissao');
-    if (permissao === 'visao' || permissao === 'edicao') {
-        alert('Seu nível de acesso não permite adicionar disciplinas.');
-        return;
+            const permissao = localStorage.getItem('usuarioPermissao');
+             if (permissao === 'visao' || permissao === 'edicao') {
+              alert('Seu nível de acesso não permite adicionar disciplinas.');
+            return;
     }
     document.getElementById('modal-title').innerText = "Adicionar Disciplina";
     
@@ -463,81 +463,6 @@ async function editarDisciplina() {
     abrirModal('editar');
 }
 
-
-        async function salvarFormularioModal() {
-            const CodDisc = document.getElementById('modal-CodDisc').value.trim();
-            const DTini = document.getElementById('modal-DTini').value;
-            const DTfim = document.getElementById('modal-DTfim').value;
-            const N = document.getElementById('modal-N').value;
-            const CargH = document.getElementById('modal-CargH').value;
-            const Controle = document.getElementById('modal-Controle').value.trim();
-            const MatProf = document.getElementById('modal-MatProf').value.trim();
-            const Obrig = document.getElementById('modal-Obrig').checked;
-
-            if (!CodDisc || !DTini || !DTfim || !N || !CargH || !Controle || !MatProf) {
-                alert('Por favor, preencha todos os campos obrigatórios do formulário.');
-                return;
-            }
-
-            const dados = { CodDisc, DTini, DTfim, N, CargH, Controle, Obrig, MatProf };
-
-            if (modoModal === 'adicionar') {
-                const novo = await router.enviar('disciplina/adicionar', dados);
-                if (novo) alert(`Disciplina "${novo.CodDisc}" adicionada com sucesso!`);
-            } else if (modoModal === 'editar') {
-                await router.enviar('disciplina/atualizar', { id: selecionadoId, dados });
-            }
-
-            fecharModal();
-            await filtrarDisciplinas();
-        }
-
-        async function excluirDisciplina() {
-            if (!selecionadoId) return;
-            const permissao = localStorage.getItem('usuarioPermissao');
-            if (permissao === 'visao' || permissao === 'edicao') {
-                alert('Seu nível de acesso não permite excluir disciplinas.');
-                return;
-            }
-
-            const disc = await router.enviar('disciplina/buscarPorId', selecionadoId);
-            if (!disc) return;
-
-            if (confirm(`Remover permanentemente a disciplina "${disc.CodDisc}" do MongoDB?`)) {
-                await router.enviar('disciplina/excluir', selecionadoId);
-                selecionadoId = null;
-                atualizarBotoes();
-                await filtrarDisciplinas();
-            }
-        }
-        // NOVA FUNÇÃO: Alimenta o dropdown do formulário com os professores reais do banco
-        async function alimentarDropdownProfessores() {
-            const selectElement = document.getElementById('modal-MatProf');
-            selectElement.innerHTML = '<option value="">Buscando professores no banco...</option>';
-
-            try {
-            // Faz a requisição direta para a API de professores que criamos anteriormente no Render
-                const res = await fetch('/api/professores');
-                const todosProfessores = await res.json();
-        
-                if (!todosProfessores || todosProfessores.length === 0) {
-                 selectElement.innerHTML = '<option value="">Nenhum professor encontrado no sistema.</option>';
-            return;
-        }
-
-            let optionsHTML = '<option value="">-- Selecione o Professor Responsável --</option>';
-             todosProfessores.forEach(p => {
-                const idRealProf = p._id || p.id;
-                 // Exibe o nome do professor e o RA (ID do MongoDB) de forma legível na mesma linha
-                 optionsHTML += `<option value="${idRealProf}">${p.nome} (RA/ID: ${idRealProf})</option>`;
-            });
-        
-        selectElement.innerHTML = optionsHTML;
-    } catch (err) {
-        console.error("Erro ao alimentar dropdown de professores na view de disciplinas:", err);
-        selectElement.innerHTML = '<option value="">Erro ao carregar lista de professores da API.</option>';
-    }
-}
 
 
         async function exportarTXT() {
