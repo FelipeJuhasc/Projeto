@@ -207,24 +207,31 @@ app.get('/api/disciplinas', async (req, res) => {
         const { termo, dtIni, dtFim } = req.query;
         let condicao = {};
 
-        // 1. Filtro por Código (Texto)
-        if (termo) {
+        // 1. Text match filter for course code
+        if (termo && termo !== '[object Object]') {
             condicao.CodDisc = { $regex: termo, $options: 'i' };
         }
 
-        // 2. Filtro Lógico por Período de Data
-        // Filtra disciplinas onde o início ou o fim estejam dentro do intervalo selecionado
-        if (dtIni || dtFim) {
+        // 2. Strict validation matching for real dates
+        // Only trigger query mutations if strings are populated and contain actual date characters
+        if ((dtIni && dtIni.trim() !== '') || (dtFim && dtFim.trim() !== '')) {
             condicao.$and = [];
             
-            if (dtIni) {
-                // Disciplina deve terminar depois ou na data inicial selecionada
-                condicao.$and.push({ DTfim: { $gte: new Date(dtIni) } });
+            if (dtIni && dtIni.trim() !== '') {
+                const dateStart = new Date(dtIni);
+                if (!isNaN(dateStart)) {
+                    condicao.$and.push({ DTfim: { $gte: dateStart } });
+                }
             }
-            if (dtFim) {
-                // Disciplina deve começar antes ou na data final selecionada
-                condicao.$and.push({ DTini: { $lte: new Date(dtFim) } });
+            if (dtFim && dtFim.trim() !== '') {
+                const dateEnd = new Date(dtFim);
+                if (!isNaN(dateEnd)) {
+                    condicao.$and.push({ DTini: { $lte: dateEnd } });
+                }
             }
+            
+            // Clean up condition structure if arrays evaluated empty
+            if (condicao.$and.length === 0) delete condicao.$and;
         }
 
         const disciplinas = await db.buscarWhere(DisciplinaModel, condicao);
@@ -233,6 +240,7 @@ app.get('/api/disciplinas', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
 
 
 app.get('/api/disciplinas/:id', async (req, res) => {
@@ -271,9 +279,6 @@ app.delete('/api/disciplinas/:id', async (req, res) => {
     }
 });
 
-}
-
-{
     // =================================================================
 // SCHEMA E MODELO DE CURSO
 // =================================================================

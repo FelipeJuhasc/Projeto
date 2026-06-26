@@ -221,9 +221,24 @@
                 router.registrar('disciplina/excluir',     async (id)      => await this.excluir(id));
             }
 
-            async getAll(termo = '') {
+                        async getAll(filtros = '') {
                 try {
-                    const url = termo ? `${this._apiUrl}?termo=${termo}` : this._apiUrl;
+                    let termo = '';
+                    let dtIni = '';
+                    let dtFim = '';
+
+                    // Properly detect if filters are coming from the new date interface object
+                    if (typeof filtros === 'object' && filtros !== null) {
+                        termo = filtros.termo || '';
+                        dtIni = filtros.dtIni || '';
+                        dtFim = filtros.dtFim || '';
+                    } else {
+                        termo = filtros || '';
+                    }
+
+                    // Build a valid cloud query parameter string 
+                    const url = `${this._apiUrl}?termo=${encodeURIComponent(termo)}&dtIni=${dtIni}&dtFim=${dtFim}`;
+                    
                     const res = await fetch(url);
                     const data = await res.json();
                     return data.map(d => new Disciplina(d._id, d.CodDisc, d.DTini, d.DTfim, d.N, d.CargH, d.Controle, d.Obrig, d.MatProf));
@@ -232,6 +247,7 @@
                     return [];
                 }
             }
+
 
             async buscarPorId(id) {
                 try {
