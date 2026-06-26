@@ -200,8 +200,26 @@ const DisciplinaSchema = new mongoose.Schema({
 
 });
 
-// Força o Mongoose a usar a coleção exatamente com a grafia da sua imagem: 'discinplina'
-const DisciplinaModel = mongoose.model('Disciplina', DisciplinaSchema, 'discinplina');
+// Força o Mongoose a usar a coleção exatamente com a grafia da sua imagem: 'disciplina'
+const DisciplinaModel = mongoose.model('Disciplina', DisciplinaSchema, 'disciplina');
+
+// =================================================================
+// SCHEMA E MODELO DE DISCIPLINA
+// =================================================================
+const DisciplinaSchema = new mongoose.Schema({
+    CodDisc:  { type: String, required: true },
+    DTini:    { type: Date, required: true },
+    DTfim:    { type: Date, required: true },
+    N:        { type: Number, required: true },
+    CargH:    { type: Number, required: true },
+    Controle: { type: String, required: true },
+    Obrig:    { type: Boolean, default: true },
+    MatProf:  { type: String, required: true } // Guarda o ID/Matrícula do professor vinculado
+});
+
+// CERTIFIQUE-SE: Mude para 'disciplina' se a sua coleção no Atlas não tiver o 'n' extra!
+const SEU_NOME_COLECAO_ATLAS = 'discinplina'; 
+const DisciplinaModel = mongoose.model('Disciplina', DisciplinaSchema, SEU_NOME_COLECAO_ATLAS);
 
 // =================================================================
 // ROTAS DA API PARA DISCIPLINA
@@ -215,8 +233,8 @@ app.get('/api/disciplinas', async (req, res) => {
             condicao.CodDisc = { $regex: termo, $options: 'i' };
         }
 
-        // Correção lógica: Só monta a barreira de datas se strings reais e preenchidas de calendário vierem da tela
-        if (dtIni && dtIni.trim() !== "" || dtFim && dtFim.trim() !== "") {
+        // Validação estrita de strings de calendário vindas da Toolbar do Frontend
+        if ((dtIni && dtIni.trim() !== "") || (dtFim && dtFim.trim() !== "")) {
             condicao.$and = [];
             
             if (dtIni && dtIni.trim() !== "") {
@@ -235,14 +253,12 @@ app.get('/api/disciplinas', async (req, res) => {
             if (condicao.$and.length === 0) delete condicao.$and;
         }
 
-        // LOG DE DIAGNÓSTICO 3: Imprime o objeto de busca exato gerado para o MongoDB Atlas
         console.log("[DIAGNÓSTICO BACKEND] Filtro gerado para o Mongo:", JSON.stringify(condicao));
 
-        // Busca usando o modelo global configurado com a coleção singular 'discinplina'
+        // Realiza a busca na nuvem
         const disciplinas = await db.buscarWhere(DisciplinaModel, condicao);
         
-        // LOG DE DIAGNÓSTICO 4: Quantidade de itens localizados no banco Atlas
-        console.log(`[DIAGNÓSTICO BACKEND] Itens encontrados na coleção 'discinplina': ${disciplinas.length}`);
+        console.log(`[DIAGNÓSTICO BACKEND] Itens encontrados na coleção '${SEU_NOME_COLECAO_ATLAS}': ${disciplinas.length}`);
 
         res.json(disciplinas);
     } catch (err) {
@@ -250,9 +266,6 @@ app.get('/api/disciplinas', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-
-
-
 
 app.get('/api/disciplinas/:id', async (req, res) => {
     try {
@@ -265,6 +278,7 @@ app.get('/api/disciplinas/:id', async (req, res) => {
 
 app.post('/api/disciplinas', async (req, res) => {
     try {
+        // Inserção através do seu utilitário de persistência do banco.js
         const novoId = await db.inserir(DisciplinaModel, req.body);
         res.json({ _id: novoId, ...req.body });
     } catch (err) {
@@ -289,6 +303,7 @@ app.delete('/api/disciplinas/:id', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
 
     // =================================================================
 // SCHEMA E MODELO DE CURSO
