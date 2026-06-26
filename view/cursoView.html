@@ -648,27 +648,55 @@
 
         // Submits an update payload sequence to insert an object link inside MongoDB
         async function adicionarDisciplinaAoCronograma() {
-            const selectElement = document.getElementById('dropdown-disciplinas');
+          const selectElement = document.getElementById('dropdown-disciplinas');
             const disciplinaId = selectElement.value;
 
+            // DIAGNÓSTICO 1: Verifica o ID selecionado na tela
+             console.log("ID da disciplina selecionada no dropdown:", disciplinaId);
+            console.log("ID do curso selecionado globalmente:", selecionadoId);
+
             if (!disciplinaId) {
-                alert('Selecione uma disciplina válida na lista suspensa antes de adicionar!');
-                return;
+                alert('Por favor, selecione uma disciplina válida na lista antes de adicionar!');
+             return;
+         }
+
+             if (!selecionadoId) {
+              alert('Erro: Nenhum curso foi detectado como selecionado no sistema.');
+               return;
             }
 
-            // Fire an asynchronous transmission directly down the pipeline architecture model
-            const resultado = await router.enviar('curso/vincular', { 
-                cursoId: selecionadoId, 
-                disciplinaId: disciplinaId 
-            });
+            try {
+               // DIAGNÓSTICO 2: Alerta o envio exato para a API
+              console.log("Disparando requisição POST para vincular disciplina...");
 
-            if (resultado && resultado.success) {
-                selectElement.value = ''; // Reset the dropdown interface field wrapper
-                await renderizarGradeCronograma(); // Re-render target elements asynchronously
-            } else {
-                alert('Erro ao vincular disciplina ao cronograma na nuvem.');
-            }
+              // Faz o fetch direto para blindar contra qualquer falha de roteamento de Router
+              const res = await fetch(`/api/cursos/${selecionadoId}/vincular-disciplina`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                   body: JSON.stringify({ disciplinaId: disciplinaId })
+              });
+
+        // DIAGNÓSTICO 3: Captura o status numérico de retorno HTTP (ex: 200, 404, 500)
+        console.log("Resposta HTTP recebida do servidor. Status:", res.status);
+
+        const resultado = await res.json();
+        console.log("Objeto JSON retornado do servidor:", resultado);
+
+        if (resultado && resultado.success) {
+            selectElement.value = ''; // Reseta o dropdown
+            await renderizarGradeCronograma(); // Atualiza a tabela na tela
+        } else {
+            // Se o servidor respondeu um erro controlado (400, 404, etc.)
+            alert(`O servidor recusou a operação: ${resultado.message || 'Erro desconhecido'}`);
         }
+
+    } catch (err) {
+        // Se a rede caiu, ou a URL deu erro de digitação, ou o JSON veio corrompido
+        console.error("Erro capturado no catch da View:", err);
+        alert(`Erro crítico na execução da View: ${err.message}\nAbra o console (F12) para ver os detalhes completos.`);
+    }
+}
+
 
         // Removes a relational object reference connection link
         async function removerDisciplinaDoCronograma(disciplinaId) {
