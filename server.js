@@ -145,6 +145,19 @@ app.get('/api/professores', async (req, res) => {
     }
 });
 
+// NOVA ROTA: Retorna apenas os docentes aptos para novos agendamentos
+app.get('/api/professores/ativos', async (req, res) => {
+    try {
+        // Filtra estritamente por documentos que possuem a propriedade ativo como verdadeira
+        const professoresAtivos = await ProfessorModel.find({ ativo: true }).lean();
+        res.json(professoresAtivos);
+    } catch (err) {
+        console.error('Erro ao buscar professores ativos para o dropdown:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
 app.get('/api/professores/:id', async (req, res) => {
     try {
         const professor = await db.buscarPorId(ProfessorModel, req.params.id);

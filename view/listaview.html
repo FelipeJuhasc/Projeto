@@ -314,7 +314,7 @@
             const sel = document.getElementById('modal-MatProf');
             sel.innerHTML = '<option value="">Buscando professores...</option>';
             try {
-                const res  = await fetch('/api/professores');
+                const res = await fetch('/api/professores/ativos');
                 const list = await res.json();
                 if (!list || list.length === 0) {
                     sel.innerHTML = '<option value="">Nenhum professor encontrado.</option>';
