@@ -95,7 +95,8 @@
                     <button class="btn btn-editar"   onclick="editarCurso()"  id="btn-editar"  disabled>Editar</button>
                     <button class="btn btn-excluir"  onclick="excluirCurso()" id="btn-excluir" disabled>Excluir</button>
                     <button class="btn btn-exportar" onclick="exportarTXT()">⬇ Exportar TXT</button>
-                       <button class="btn" onclick="gerenciarCronograma()" id="btn-cronograma" style="background: #9C27B0; color: white;" disabled>📅 Cronograma</button>               
+                    
+                    <button class="btn" onclick="gerenciarCronograma()" id="btn-cronograma" style="background: #9C27B0; color: white;" disabled>📅 Cronograma</button>               
                 </div>
             </div>
 
@@ -412,10 +413,12 @@
         }
 
         function atualizarBotoes() {
-            const hab = selecionadoId !== null;
-            document.getElementById('btn-editar').disabled  = !hab;
-            document.getElementById('btn-excluir').disabled = !hab;
+         const hab = selecionadoId !== null;
+         document.getElementById('btn-editar').disabled  = !hab;
+         document.getElementById('btn-excluir').disabled = !hab;
+         document.getElementById('btn-cronograma').disabled = !hab; // Unfreezes the button layout
         }
+
 
         async function filtrarCursos() {
             const termo = document.getElementById('search-input').value;
