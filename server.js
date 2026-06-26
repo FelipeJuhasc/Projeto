@@ -211,39 +211,46 @@ app.get('/api/disciplinas', async (req, res) => {
         const { termo, dtIni, dtFim } = req.query;
         let condicao = {};
 
-        // 1. Text match filter for course code
         if (termo && termo !== '[object Object]') {
             condicao.CodDisc = { $regex: termo, $options: 'i' };
         }
 
-        // 2. Strict validation matching for real dates
-        // Only trigger query mutations if strings are populated and contain actual date characters
-        if ((dtIni && dtIni.trim() !== '') || (dtFim && dtFim.trim() !== '')) {
+        // Correção lógica: Só monta a barreira de datas se strings reais e preenchidas de calendário vierem da tela
+        if (dtIni && dtIni.trim() !== "" || dtFim && dtFim.trim() !== "") {
             condicao.$and = [];
             
-            if (dtIni && dtIni.trim() !== '') {
+            if (dtIni && dtIni.trim() !== "") {
                 const dateStart = new Date(dtIni);
                 if (!isNaN(dateStart)) {
                     condicao.$and.push({ DTfim: { $gte: dateStart } });
                 }
             }
-            if (dtFim && dtFim.trim() !== '') {
+            if (dtFim && dtFim.trim() !== "") {
                 const dateEnd = new Date(dtFim);
                 if (!isNaN(dateEnd)) {
                     condicao.$and.push({ DTini: { $lte: dateEnd } });
                 }
             }
             
-            // Clean up condition structure if arrays evaluated empty
             if (condicao.$and.length === 0) delete condicao.$and;
         }
 
+        // LOG DE DIAGNÓSTICO 3: Imprime o objeto de busca exato gerado para o MongoDB Atlas
+        console.log("[DIAGNÓSTICO BACKEND] Filtro gerado para o Mongo:", JSON.stringify(condicao));
+
+        // Busca usando o modelo global configurado com a coleção singular 'discinplina'
         const disciplinas = await db.buscarWhere(DisciplinaModel, condicao);
+        
+        // LOG DE DIAGNÓSTICO 4: Quantidade de itens localizados no banco Atlas
+        console.log(`[DIAGNÓSTICO BACKEND] Itens encontrados na coleção 'discinplina': ${disciplinas.length}`);
+
         res.json(disciplinas);
     } catch (err) {
+        console.error('Erro interno na rota de disciplinas:', err.message);
         res.status(500).json({ error: err.message });
     }
 });
+
 
 
 

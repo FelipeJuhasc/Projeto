@@ -394,7 +394,7 @@
             }
     
         return d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-        }
+    }
 
         function selecionarDisciplina(id) {
             selecionadoId = (selecionadoId === id) ? null : id;
@@ -422,26 +422,40 @@
 
 // Pequeno ajuste necessário na Controller para receber o objeto com os filtros
 // Altere o método getAll dentro da sua DisciplinaController para ler o objeto:
-        async function getAll(filtros = {}) {
-            try {
-        const termo = filtros.termo || '';
-        const dtIni = filtros.dtIni || '';
-        const dtFim = filtros.dtFim || '';
+        async function getAll(filtros = '') {
+    try {
+        let termo = '';
+        let dtIni = '';
+        let dtFim = '';
 
-        // Cria a URL com todos os filtros acumulados
-        let url = `${this._apiUrl}?termo=${encodeURIComponent(termo)}&dtIni=${dtIni}&dtFim=${dtFim}`;
+        if (typeof filtros === 'object' && filtros !== null) {
+            termo = filtros.termo || '';
+            dtIni = filtros.dtIni || '';
+            dtFim = filtros.dtFim || '';
+        } else {
+            termo = filtros || '';
+        }
+
+        const url = `${this._apiUrl}?termo=${encodeURIComponent(termo)}&dtIni=${dtIni}&dtFim=${dtFim}`;
         
+        // LOG DE DIAGNÓSTICO 1: Verifica a URL exata disparada para a nuvem
+        console.log("[DIAGNÓSTICO] URL enviada ao fetch:", url);
+
         const res = await fetch(url);
         const data = await res.json();
         
+        // LOG DE DIAGNÓSTICO 2: Inspeciona o formato bruto dos dados entregues pela API
+        console.log("[DIAGNÓSTICO] Dados brutos recebidos da API:", data);
+
         return data.map(d => new Disciplina(
             d._id, d.CodDisc, d.DTini, d.DTfim, d.N, d.CargH, d.Controle, d.Obrig, d.MatProf
         ));
     } catch (err) {
-            console.error('Erro ao buscar disciplinas:', err);
-            return [];
-        }
+        console.error('Erro ao buscar disciplinas na Controller:', err);
+        return [];
+    }
 }
+
         // --- FUNÇÕES DE CONTROLE DO MODAL ---
         function abrirModal(modo) {
             modoModal = modo;
