@@ -6,7 +6,7 @@ class Disciplina {
         this._DTfim = DTfim;
         this._N = N;
         this._CargaH = CargH;
-        this._Controle = Controle;
+        this._Controle = Controle; //3 frequencia, 4 sem controle, 5 nota + frenquencia, 6 nota
         this._Obrig = Obrig;
         this._MatProf = MatProf;
     }
