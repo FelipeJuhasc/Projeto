@@ -617,8 +617,98 @@
 }
 
 
-        // Renders the sub-grid visualization tracking schedule elements 
-        async function renderizarGradeCronograma() {
+       async function renderizarGradeCronograma() {
+    const container = document.getElementById('schedule-list-container');
+    container.innerHTML = '<p style="text-align: center; color: #999;">Carregando cronograma...</p>';
+
+    const resCurso = await fetch(`/api/cursos/${selecionadoId}`);
+    const cursoAtualizado = await resCurso.json();
+    
+    if (!cursoAtualizado || !cursoAtualizado.disciplinas || cursoAtualizado.disciplinas.length === 0) {
+        container.innerHTML = '<p class="lista-vazia" style="color: #999; text-align: center; padding: 20px;">Nenhuma disciplina vinculada a este cronograma.</p>';
+        return;
+    }
+
+    // Ordena o array no front-end pelo número da ordem de rotação antes de desenhar na tela
+    cursoAtualizado.disciplinas.sort((a, b) => a.ordem - b.ordem);
+
+    let gridHTML = '';
+    
+    cursoAtualizado.disciplinas.forEach((item) => {
+        // Como o Mongoose populou, os dados da disciplina estão dentro de item.disciplinaId
+        const dadosItem = item.disciplinaId;
+        if (!dadosItem) return;
+
+        const idRealDisc = dadosItem._id || dadosItem.id;
+        const checkedFixa = item.fixa ? 'checked' : '';
+
+        gridHTML += `
+            <div style="background: white; border: 1px solid #ddd; border-radius: 6px; padding: 12px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div style="text-align: left; flex: 1;">
+                        <strong style="color: #2c3e50; font-size: 15px;">Código da Disciplina: ${dadosItem.CodDisc}</strong>
+                        <br><small style="color: #666;">Carga Horária: ${dadosItem.CargH}h | Turma: ${dadosItem.N} | Prof: ${dadosItem.MatProf}</small>
+                    </div>
+                    
+                    <!-- PAINEL DE CONTROLE DE ROTAÇÃO E PROPRIEDADES -->
+                    <div style="display: flex; align-items: center; gap: 12px; background: #f8f9fa; padding: 6px 12px; border-radius: 6px; border: 1px solid #eee;">
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <label style="font-size: 12px; font-weight: bold; color: #555;">Ordem:</label>
+                            <input type="number" id="ordem-${idRealDisc}" value="${item.ordem}" style="width: 50px; padding: 4px; border: 1px solid #ccc; border-radius: 4px; text-align: center;" min="1" />
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <input type="checkbox" id="fixa-${idRealDisc}" ${checkedFixa} style="width: auto; cursor: pointer;" />
+                            <label for="fixa-${idRealDisc}" style="font-size: 12px; font-weight: bold; color: #555; cursor: pointer;">Fixa</label>
+                        </div>
+
+                        <button class="btn" onclick="salvarPropriedadesDisciplina('${idRealDisc}')" style="background: #2196F3; color: white; padding: 4px 8px; font-size: 11px; border-radius: 4px;">✔ Salvar</button>
+                    </div>
+                </div>
+                
+                <div style="display: flex; justify-content: flex-end; border-top: 1px dashed #eee; padding-top: 8px;">
+                    <button class="btn btn-excluir" onclick="removerDisciplinaDoCronograma('${idRealDisc}')" style="padding: 4px 10px; font-size: 12px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">Remover do Curso</button>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = gridHTML;
+}
+
+// NOVA FUNÇÃO: ATUALIZA A ROTAÇÃO E A DECLARAÇÃO DE FIXO NO MONGO
+async function salvarPropriedadesDisciplina(disciplinaId) {
+    const novaOrdem = document.getElementById(`ordem-${disciplinaId}`).value;
+    const ehFixa = document.getElementById(`fixa-${disciplinaId}`).checked;
+
+    if (!novaOrdem || novaOrdem < 1) {
+        alert("A ordem de rotação deve ser um número válido igual ou maior que 1.");
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/cursos/${selecionadoId}/disciplinas/${disciplinaId}/propriedades`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ordem: novaOrdem,
+                fixa: ehFixa
+            })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            // Recarrega a grade. Graças ao .sort(), ela vai se reordenar visualmente sozinha!
+            await renderizarGradeCronograma();
+        } else {
+            alert("Falha ao salvar as propriedades no servidor.");
+        }
+    } catch (err) {
+        console.error("Erro ao editar propriedades:", err);
+        alert("Erro de conexão ao salvar edições.");
+    }
+}
+
     const container = document.getElementById('schedule-list-container');
     container.innerHTML = '<p style="text-align: center; color: #999;">Carregando cronograma...</p>';
 

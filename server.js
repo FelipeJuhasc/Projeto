@@ -194,7 +194,14 @@ const DisciplinaSchema = new mongoose.Schema({
     CargH:    { type: Number, required: true },
     Controle: { type: String, required: true },
     Obrig:    { type: Boolean, default: true },
-    MatProf:  { type: String, required: true }
+    MatProf:  { type: String, required: true },
+        // Nova estrutura para permitir ordenação, edição e status de fixo por curso
+    disciplinas: [{
+        disciplinaId: { type: mongoose.Schema.Types.ObjectId, ref: 'Disciplina' },
+        ordem:        { type: Number, required: true, default: 1 },
+        fixa:         { type: Boolean, required: true, default: false }
+    }]
+
 });
 
 // Força o Mongoose a usar a coleção exatamente com a grafia da sua imagem: 'discinplina'
@@ -318,8 +325,8 @@ app.get('/api/cursos', async (req, res) => {
 });
 app.get('/api/cursos/:id', async (req, res) => {
     try {
-        // Enforce data populate operations over target array arrays
-        const curso = await CursoModel.findById(req.params.id).populate('disciplinas');
+        // Modificado para caminhar por dentro do novo array de objetos do Mongoose
+        const curso = await CursoModel.findById(req.params.id).populate('disciplinas.disciplinaId');
         res.json(curso);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -328,64 +335,66 @@ app.get('/api/cursos/:id', async (req, res) => {
 
 
 
-// Add a discipline to a course timeline schedule
+
+// 1. ROTA DE VÍNCULO ATUALIZADA (Calcula a ordem automaticamente)
 app.post('/api/cursos/:cursoId/vincular-disciplina', async (req, res) => {
     try {
         const { cursoId } = req.params;
         const { disciplinaId } = req.body;
 
-        // 1. Validação obrigatória: Verifica se o ID do curso é um ObjectId válido do MongoDB
-        if (!mongoose.Types.ObjectId.isValid(cursoId)) {
-            return res.status(400).json({ 
-                success: false, 
-                message: `O ID do curso (${cursoId}) é inválido. Certifique-se de selecionar um curso real cadastrado no MongoDB, e não um dado de teste antigo (como 1, 2 ou 3).` 
-            });
-        }
-
-        // 2. Validação obrigatória: Verifica se o ID da disciplina é um ObjectId válido do MongoDB
-        if (!disciplinaId || !mongoose.Types.ObjectId.isValid(disciplinaId)) {
-            return res.status(400).json({ 
-                success: false, 
-                message: `O ID da disciplina selecionada (${disciplinaId || 'vazio'}) é inválido ou não foi encontrado no MongoDB.` 
-            });
-        }
-
-        // 3. Busca o curso utilizando o modelo global
         const cursoExistente = await CursoModel.findById(cursoId);
-        if (!cursoExistente) {
-            return res.status(404).json({ success: false, message: 'Curso não encontrado no banco de dados.' });
-        }
+        if (!cursoExistente) return res.status(404).json({ success: false, message: 'Curso não encontrado.' });
 
-        if (!cursoExistente.disciplinas) {
-            cursoExistente.disciplinas = [];
-        }
+        if (!cursoExistente.disciplinas) cursoExistente.disciplinas = [];
 
-        // Converte as strings validadas em ObjectIds para o Mongoose
-        const oIdDisciplina = new mongoose.Types.ObjectId(disciplinaId);
+        // Verifica se a disciplina já está no cronograma deste curso
+        const jaExiste = cursoExistente.disciplinas.some(d => d.disciplinaId && d.disciplinaId.toString() === disciplinaId);
+        if (jaExiste) return res.json({ success: true, message: 'Disciplina já agendada.' });
 
-        // Verifica se a disciplina já está no cronograma
-        const jaExiste = cursoExistente.disciplinas.some(id => id.toString() === oIdDisciplina.toString());
-        if (jaExiste) {
-            return res.json({ success: true, message: 'Esta disciplina já está cadastrada no cronograma deste curso.' });
-        }
+        // Calcula o próximo número da ordem (maior ordem atual + 1)
+        const maiorOrdem = cursoExistente.disciplinas.reduce((max, d) => d.ordem > max ? d.ordem : max, 0);
+        const proximaOrdem = maiorOrdem + 1;
 
-        // Insere no array e salva o documento
-        cursoExistente.disciplinas.push(oIdDisciplina);
+        // Insere a nova estrutura com ordem e flag padrão (false/não fixa)
+        cursoExistente.disciplinas.push({
+            disciplinaId: new mongoose.Types.ObjectId(disciplinaId),
+            ordem: proximaOrdem,
+            fixa: false
+        });
+
         await cursoExistente.save();
-
-        // Retorna o objeto atualizado populando os dados reais
-        const cursoAtualizado = await CursoModel.findById(cursoId).populate('disciplinas');
-
+        const cursoAtualizado = await CursoModel.findById(cursoId).populate('disciplinas.disciplinaId');
         res.json({ success: true, curso: cursoAtualizado });
     } catch (err) {
-        console.error('Erro interno detectado no Render:', err.message);
         res.status(500).json({ success: false, message: err.message });
     }
 });
 
+// 2. NOVA ROTA: PERMITE EDITAR A ORDEM (ROTAÇÃO) E A FLAG FIXA DE UMA DISCIPLINA NO CRONOGRAMA
+app.put('/api/cursos/:cursoId/disciplinas/:disciplinaId/propriedades', async (req, res) => {
+    try {
+        const { cursoId, WoodId, disciplinaId } = req.params;
+        const { ordem, fixa } = req.body; // Recebe os novos valores editados na tela
 
+        // Atualiza os campos específicos do objeto interno do array utilizando os filtros do Mongoose
+        const cursoAtualizado = await CursoModel.findOneAndUpdate(
+            { _id: cursoId, "disciplinas.disciplinaId": disciplinaId },
+            { 
+                $set: { 
+                    "disciplinas.$.ordem": Number(ordem),
+                    "disciplinas.$.fixa": Boolean(fixa)
+                } 
+            },
+            { new: true }
+        ).populate('disciplinas.disciplinaId');
 
-// Remove a discipline from a course timeline schedule
+        res.json({ success: true, curso: cursoAtualizado });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// 3. ROTA DE DESVINCULAR ATUALIZADA (Remove o subobjeto do array corretamente)
 app.post('/api/cursos/:cursoId/desvincular-disciplina', async (req, res) => {
     try {
         const { cursoId } = req.params;
@@ -393,15 +402,16 @@ app.post('/api/cursos/:cursoId/desvincular-disciplina', async (req, res) => {
 
         const cursoAtualizado = await CursoModel.findByIdAndUpdate(
             cursoId,
-            { $pull: { disciplinas: disciplinaId } }, // $pull removes item from array
+            { $pull: { disciplinas: { disciplinaId: disciplinaId } } },
             { new: true }
-        );
+        ).populate('disciplinas.disciplinaId');
 
         res.json({ success: true, curso: cursoAtualizado });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        res.status(500).json({ success: false, message: err.message });
     }
 });
+
 
 
 app.post('/api/cursos', async (req, res) => {
