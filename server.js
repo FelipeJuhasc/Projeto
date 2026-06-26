@@ -343,18 +343,41 @@ app.post('/api/cursos/:cursoId/vincular-disciplina', async (req, res) => {
             return res.status(400).json({ success: false, message: 'ID da disciplina é obrigatório.' });
         }
 
-        // Push the discipline ID into the course array using Mongoose atomic operators
-        const cursoAtualizado = await CursoModel.findByIdAndUpdate(
-            cursoId,
-            { $addToSet: { disciplinas: disciplinaId } }, // $addToSet prevents adding duplicates
-            { new: true }
-        ).populate('disciplinas'); // Returns populated data automatically
+        // 1. Convertemos as strings em ObjectIds válidos do Mongoose para evitar erros de tipo
+        const mongoose = require('mongoose');
+        const cId = new mongoose.Types.ObjectId(cursoId);
+        const dId = new mongoose.Types.ObjectId(disciplinaId);
+
+        // 2. Buscamos o curso primeiro para garantir que ele existe
+        const cursoExistente = await mongoose.model('Curso').findById(cId);
+        if (!cursoExistente) {
+            return res.status(404).json({ success: false, message: 'Curso não encontrado.' });
+        }
+
+        // 3. SE por acaso o documento antigo no Atlas não tiver a propriedade array iniciada, nós a criamos aqui
+        if (!cursoExistente.disciplinas) {
+            cursoExistente.disciplinas = [];
+        }
+
+        // 4. Verifica se a disciplina já está vinculada para evitar duplicidade manual
+        if (cursoExistente.disciplinas.includes(dId)) {
+            return res.json({ success: true, message: 'Disciplina já está agendada neste curso.' });
+        }
+
+        // 5. Adiciona o ID da disciplina ao array e salva o documento nativamente via Mongoose
+        cursoExistente.disciplinas.push(dId);
+        await cursoExistente.save();
+
+        // 6. Busca novamente populando os dados para devolver a estrutura completa para a View
+        const cursoAtualizado = await mongoose.model('Curso').findById(cId).populate('disciplinas');
 
         res.json({ success: true, curso: cursoAtualizado });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        console.error('Erro interno ao vincular disciplina no Render:', err.message);
+        res.status(500).json({ success: false, message: err.message });
     }
 });
+
 
 // Remove a discipline from a course timeline schedule
 app.post('/api/cursos/:cursoId/desvincular-disciplina', async (req, res) => {
