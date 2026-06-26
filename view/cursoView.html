@@ -709,69 +709,6 @@ async function salvarPropriedadesDisciplina(disciplinaId) {
     }
 }
 
-    const container = document.getElementById('schedule-list-container');
-    container.innerHTML = '<p style="text-align: center; color: #999;">Carregando cronograma...</p>';
-
-    // 1. Busca novamente o curso atualizado diretamente da API para ler o estado mais recente do MongoDB
-    const resCurso = await fetch(`/api/cursos/${selecionadoId}`);
-    const cursoAtualizado = await resCurso.json();
-    
-    if (!cursoAtualizado || !cursoAtualizado.disciplinas || cursoAtualizado.disciplinas.length === 0) {
-        container.innerHTML = '<p class="lista-vazia" style="color: #999; text-align: center; padding: 20px;">Nenhuma disciplina vinculada a este cronograma.</p>';
-        return;
-    }
-
-    // 2. BACKUP DE SEGURANÇA: Se o Mongoose retornar apenas os IDs de 24 caracteres em vez do objeto completo,
-    // nós fazemos um fetch rápido na API de disciplinas para cruzar os dados no frontend sem quebrar a tela.
-    let listaDisciplinasCompleta = [];
-    const primeiroItem = cursoAtualizado.disciplinas[0];
-    
-    if (typeof primeiroItem === 'string' || (primeiroItem && !primeiroItem.CodDisc)) {
-        console.log("[Aviso] Backend retornou apenas IDs. Buscando dados completos via contingência...");
-        const resDisc = await fetch('/api/disciplinas');
-        listaDisciplinasCompleta = await resDisc.json();
-    }
-
-    let gridHTML = '';
-    
-    cursoAtualizado.disciplinas.forEach((d, index) => {
-        let dadosItem = d;
-
-        // Se caímos na contingência, localiza a disciplina correspondente pelo ID
-        if (typeof d === 'string' || !d.CodDisc) {
-            const idBuscar = typeof d === 'string' ? d : (d._id || d.id);
-            dadosItem = listaDisciplinasCompleta.find(item => (item._id || item.id) === idBuscar.toString()) || d;
-        }
-
-        // Recupera o ID correto para a função de exclusão
-        const idExcluir = dadosItem._id || dadosItem.id || (typeof d === 'string' ? d : '');
-
-        // Se encontrou as propriedades, renderiza com o design correto. Se não, exibe o ID como segurança.
-        if (dadosItem && dadosItem.CodDisc) {
-            gridHTML += `
-                <div style="background: white; border: 1px solid #ddd; border-radius: 6px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                    <div style="text-align: left;">
-                        <strong style="color: #2c3e50; font-size: 14px;">${index + 1}. Código: ${dadosItem.CodDisc}</strong>
-                        <br><small style="color: #666;">Carga Horária: ${dadosItem.CargH}h | Turma: ${dadosItem.N} | Prof: ${dadosItem.MatProf}</small>
-                    </div>
-                    <button class="btn btn-excluir" onclick="removerDisciplinaDoCronograma('${idExcluir}')" style="padding: 4px 10px; font-size: 12px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">Remover</button>
-                </div>
-            `;
-        } else {
-            gridHTML += `
-                <div style="background: white; border: 1px solid #ddd; border-radius: 6px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-                    <div style="text-align: left;">
-                        <strong style="color: #c0392b; font-size: 14px;">${index + 1}. Disciplina Vinc_ID: ${idExcluir}</strong>
-                        <br><small style="color: #888;">Dados detalhados indisponíveis.</small>
-                    </div>
-                    <button class="btn btn-excluir" onclick="removerDisciplinaDoCronograma('${idExcluir}')" style="padding: 4px 10px; font-size: 12px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">Remover</button>
-                </div>
-            `;
-        }
-    });
-
-    container.innerHTML = gridHTML;
-}
 
 
         // Submits an update payload sequence to insert an object link inside MongoDB
