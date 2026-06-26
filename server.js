@@ -284,19 +284,23 @@ app.delete('/api/disciplinas/:id', async (req, res) => {
 // SCHEMA E MODELO DE CURSO
 // =================================================================
 const CursoSchema = new mongoose.Schema({
+    CursoInst:   { type: String, required: true },
     DTiniIncs:   { type: Date, required: true },
     DTfimInsc:   { type: Date, required: true },
     CargaH:      { type: Number, required: true },
     CargaHTCC:   { type: Number, required: true },
     Codiesde:    { type: String, required: true },
     Gradeiesde:  { type: String, required: true },
-    CursoInst:   { type: String, required: true },
     IniImediato: { type: Boolean, default: false },
     IniMat:      { type: Date, required: true },
     FimMat:      { type: Date, required: true },
     Matcoord:    { type: String, required: true },
-    PasSeg:      { type: Boolean, default: false }
+    PasSeg:      { type: Boolean, default: false },
+    
+    // NEW: Array holding references to scheduling disciplines
+    disciplinas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Disciplina' }]
 });
+
 
 // Força o Mongoose a usar a coleção singular 'curso' do seu banco 'conexao'
 const CursoModel = mongoose.model('Curso', CursoSchema, 'curso');
@@ -326,6 +330,48 @@ app.get('/api/cursos/:id', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+// Add a discipline to a course timeline schedule
+app.post('/api/cursos/:cursoId/vincular-disciplina', async (req, res) => {
+    try {
+        const { cursoId } = req.params;
+        const { disciplinaId } = req.body;
+
+        if (!disciplinaId) {
+            return res.status(400).json({ success: false, message: 'ID da disciplina é obrigatório.' });
+        }
+
+        // Push the discipline ID into the course array using Mongoose atomic operators
+        const cursoAtualizado = await CursoModel.findByIdAndUpdate(
+            cursoId,
+            { $addToSet: { disciplinas: disciplinaId } }, // $addToSet prevents adding duplicates
+            { new: true }
+        ).populate('disciplinas'); // Returns populated data automatically
+
+        res.json({ success: true, curso: cursoAtualizado });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Remove a discipline from a course timeline schedule
+app.post('/api/cursos/:cursoId/desvincular-disciplina', async (req, res) => {
+    try {
+        const { cursoId } = req.params;
+        const { disciplinaId } = req.body;
+
+        const cursoAtualizado = await CursoModel.findByIdAndUpdate(
+            cursoId,
+            { $pull: { disciplinas: disciplinaId } }, // $pull removes item from array
+            { new: true }
+        );
+
+        res.json({ success: true, curso: cursoAtualizado });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 
 app.post('/api/cursos', async (req, res) => {
     try {

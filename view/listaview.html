@@ -219,6 +219,9 @@
                 router.registrar('disciplina/adicionar',   async (dados)   => await this.adicionar(dados));
                 router.registrar('disciplina/atualizar',   async (payload) => await this.atualizar(payload.id, payload.dados));
                 router.registrar('disciplina/excluir',     async (id)      => await this.excluir(id));
+                router.registrar('curso/vincular', async (p) => await this.vincularDisciplina(p.cursoId, p.disciplinaId));
+                router.registrar('curso/desvincular', async (p) => await this.desvincularDisciplina(p.cursoId, p.disciplinaId));
+
             }
 
                         async getAll(filtros = '') {

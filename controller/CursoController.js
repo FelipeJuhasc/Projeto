@@ -91,6 +91,35 @@ class CursoController {
             return false;
         }
     }
+
+        async vincularDisciplina(cursoId, disciplinaId) {
+        try {
+            const res = await fetch(`${this._apiUrl}/${cursoId}/vincular-disciplina`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ disciplinaId })
+            });
+            return await res.json();
+        } catch (err) {
+            console.error('Erro ao vincular disciplina ao cronograma:', err);
+            return { success: false };
+        }
+    }
+
+    async desvincularDisciplina(cursoId, disciplinaId) {
+        try {
+            const res = await fetch(`${this._apiUrl}/${cursoId}/desvincular-disciplina`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ disciplinaId })
+            });
+            return await res.json();
+        } catch (err) {
+            console.error('Erro ao remover disciplina do cronograma:', err);
+            return { success: false };
+        }
+    }
+
 }
 
 window.cursoController = new CursoController();
