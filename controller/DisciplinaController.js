@@ -23,7 +23,7 @@ class DisciplinaController {
         let dtIni = '';
         let dtFim = '';
 
-        // Tratamento inteligente: verifica se o filtro recebido é o novo objeto ou texto comum
+        // Captura os dados caso venham encapsulados em um objeto da Toolbar
         if (typeof filtros === 'object' && filtros !== null) {
             termo = filtros.termo || '';
             dtIni = filtros.dtIni || '';
@@ -32,22 +32,31 @@ class DisciplinaController {
             termo = filtros || '';
         }
 
-        // Constrói a URL de forma segura enviando os parâmetros para o Render
-        const url = `${this._apiUrl}?termo=${encodeURIComponent(termo)}&dtIni=${dtIni}&dtFim=${dtFim}`;
+        // MONTAGEM SEGURA DE URL: Só adiciona dtIni e dtFim se elas estiverem preenchidas
+        let url = `${this._apiUrl}?termo=${encodeURIComponent(termo)}`;
         
+        if (dtIni && dtIni.trim() !== '') {
+            url += `&dtIni=${dtIni}`;
+        }
+        if (dtFim && dtFim.trim() !== '') {
+            url += `&dtFim=${dtFim}`;
+        }
+
+        console.log("[DEBUG CONTROLLER] Buscando disciplinas na URL:", url);
+
         const res = await fetch(url);
         const data = await res.json();
         
-        // Mapeia o resultado retornado do MongoDB Atlas
+        // Reconstrói a model de disciplinas a partir dos dados do MongoDB Atlas
         return data.map(d => new Disciplina(
             d._id, d.CodDisc, d.DTini, d.DTfim, d.N, d.CargH, d.Controle, d.Obrig, d.MatProf
-            
         ));
     } catch (err) {
-        console.error('Erro ao buscar disciplinas no banco:', err);
+        console.error('Erro ao buscar disciplinas no método getAll da controller:', err);
         return [];
     }
 }
+
 
 
     async buscarPorId(id) {
