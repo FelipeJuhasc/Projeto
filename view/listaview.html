@@ -349,11 +349,14 @@
                     <span style="font-size:11px; font-weight:bold; color:${corObrig}; margin-left:8px;">${tipoObrig}</span>
                     <br><small>
                         Período: ${formatarDataBR(disc.DTini)} até ${formatarDataBR(disc.DTfim)} <br>
-                        Turma (N): ${disc.N} | C.H.: ${disc.CargH}h | Controle: ${disc.Controle} | Prof. Matrícula: ${disc.MatProf}
+                        Turma (N): ${disc.N} | C.H.: ${disc.CargH}h | Controle: ${disc.Controle} | // Dentro do forEach da função renderDisciplinas:
+Prof. Matrícula: ${disc.MatProf || 'Não atribuído'}
+
                     </small>
                 `;
                 div.onclick = () => selecionarDisciplina(disc.id);
                 container.appendChild(div);
+
             });
         }
 
@@ -464,9 +467,9 @@ async function editarDisciplina() {
 }
 
         async function alimentarDropdownProfessores() {
-            const selectElement = document.getElementById('modal-MatProf');
+    const selectElement = document.getElementById('modal-MatProf');
     
-         // Se o modal ainda não existir ou o ID estiver errado na tela, sai sem travar o resto do código
+    // Se o modal ainda não existir ou o ID estiver errado na tela, sai sem travar o resto do código
     if (!selectElement) return;
 
     selectElement.innerHTML = '<option value="">Buscando professores no banco...</option>';
@@ -494,8 +497,9 @@ async function editarDisciplina() {
     } catch (err) {
         console.error("Erro ao alimentar dropdown de professores:", err);
         selectElement.innerHTML = '<option value="">Erro ao carregar lista de professores da API.</option>';
-         }
+    }
 }
+
 
 
         async function exportarTXT() {
