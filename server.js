@@ -194,7 +194,7 @@ const DisciplinaSchema = new mongoose.Schema({
     CargH:    { type: Number, required: true },
     Controle: { type: String, required: true },
     Obrig:    { type: Boolean, default: true },
-    MatProf:  { type: String, required: true } // Matrícula do professor vinculado
+    MatProf:  { type: String, required: true }
 });
 
 // Força o Mongoose a usar a coleção exatamente com a grafia da sua imagem: 'discinplina'
@@ -296,13 +296,8 @@ const CursoSchema = new mongoose.Schema({
     FimMat:      { type: Date, required: true },
     Matcoord:    { type: String, required: true },
     PasSeg:      { type: Boolean, default: false },
-    
-    // NEW: Array holding references to scheduling disciplines
-    disciplinas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Disciplina' }]
+    disciplinas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Disciplina' }] // Ref deve bater com o nome do modelo
 });
-
-
-// Força o Mongoose a usar a coleção singular 'curso' do seu banco 'conexao'
 const CursoModel = mongoose.model('Curso', CursoSchema, 'curso');
 
 // =================================================================
@@ -343,37 +338,37 @@ app.post('/api/cursos/:cursoId/vincular-disciplina', async (req, res) => {
             return res.status(400).json({ success: false, message: 'ID da disciplina é obrigatório.' });
         }
 
-        // 1. Convertemos as strings em ObjectIds válidos do Mongoose para evitar erros de tipo
-        const mongoose = require('mongoose');
-        const cId = new mongoose.Types.ObjectId(cursoId);
-        const dId = new mongoose.Types.ObjectId(disciplinaId);
-
-        // 2. Buscamos o curso primeiro para garantir que ele existe
-        const cursoExistente = await mongoose.model('Curso').findById(cId);
+        // Busca o documento do curso na base de dados
+        const cursoExistente = await CursoModel.findById(cursoId);
         if (!cursoExistente) {
             return res.status(404).json({ success: false, message: 'Curso não encontrado.' });
         }
 
-        // 3. SE por acaso o documento antigo no Atlas não tiver a propriedade array iniciada, nós a criamos aqui
+        // Inicializa o array caso ele não exista por conta de cadastros antigos do Atlas
         if (!cursoExistente.disciplinas) {
             cursoExistente.disciplinas = [];
         }
 
-        // 4. Verifica se a disciplina já está vinculada para evitar duplicidade manual
-        if (cursoExistente.disciplinas.includes(dId)) {
-            return res.json({ success: true, message: 'Disciplina já está agendada neste curso.' });
+        // Converte o ID recebido para o formato ObjectId do Mongoose
+        const oIdDisciplina = new mongoose.Types.ObjectId(disciplinaId);
+
+        // Verifica se o ID já consta no cronograma para evitar duplicidades
+        const jaExiste = cursoExistente.disciplinas.some(id => id.toString() === oIdDisciplina.toString());
+        
+        if (jaExiste) {
+            return res.json({ success: true, message: 'Disciplina já cadastrada neste cronograma.' });
         }
 
-        // 5. Adiciona o ID da disciplina ao array e salva o documento nativamente via Mongoose
-        cursoExistente.disciplinas.push(dId);
+        // Insere o identificador e commita na nuvem através do método save nativo
+        cursoExistente.disciplinas.push(oIdDisciplina);
         await cursoExistente.save();
 
-        // 6. Busca novamente populando os dados para devolver a estrutura completa para a View
-        const cursoAtualizado = await mongoose.model('Curso').findById(cId).populate('disciplinas');
+        // Retorna a estrutura populada usando o modelo devidamente registrado
+        const cursoAtualizado = await CursoModel.findById(cursoId).populate('disciplinas');
 
         res.json({ success: true, curso: cursoAtualizado });
     } catch (err) {
-        console.error('Erro interno ao vincular disciplina no Render:', err.message);
+        console.error('Erro interno detectado no Render:', err.message);
         res.status(500).json({ success: false, message: err.message });
     }
 });
