@@ -210,24 +210,24 @@ app.get('/api/disciplinas', async (req, res) => {
         const { termo, dtIni, dtFim } = req.query;
         let condicao = {};
 
-        if (termo && termo !== '[object Object]') {
+        // 1. Filtro por código da disciplina (texto)
+        if (termo && termo !== '[object Object]' && termo !== 'undefined') {
             condicao.CodDisc = { $regex: termo, $options: 'i' };
         }
 
-        // Validação estrita de strings de calendário vindas da Toolbar do Frontend
-        // Substitua a verificação antiga por esta linha muito mais segura no seu server.js:
+        // 2. Filtro estrito de datas (ignora lixo de requisição)
         if (dtIni && dtIni.trim() !== "" && dtIni !== "undefined" && dtIni !== "[object Object]" || 
             dtFim && dtFim.trim() !== "" && dtFim !== "undefined" && dtFim !== "[object Object]") {
-        
+            
             condicao.$and = [];
             
-            if (dtIni && dtIni.trim() !== "") {
+            if (dtIni && dtIni.trim() !== "" && dtIni !== "undefined") {
                 const dateStart = new Date(dtIni);
                 if (!isNaN(dateStart)) {
                     condicao.$and.push({ DTfim: { $gte: dateStart } });
                 }
             }
-            if (dtFim && dtFim.trim() !== "") {
+            if (dtFim && dtFim.trim() !== "" && dtFim !== "undefined") {
                 const dateEnd = new Date(dtFim);
                 if (!isNaN(dateEnd)) {
                     condicao.$and.push({ DTini: { $lte: dateEnd } });
@@ -237,19 +237,36 @@ app.get('/api/disciplinas', async (req, res) => {
             if (condicao.$and.length === 0) delete condicao.$and;
         }
 
-        console.log("[DIAGNÓSTICO BACKEND] Filtro gerado para o Mongo:", JSON.stringify(condicao));
+        console.log("[DIAGNÓSTICO] Buscando disciplinas com a query:", JSON.stringify(condicao));
 
-        // Realiza a busca na nuvem
-        const disciplinas = await db.buscarWhere(DisciplinaModel, condicao);
+        // CORREÇÃO DA PERSISTÊNCIA: Usamos o .find() nativo do Mongoose em vez do db.buscarWhere.
+        // Adicionamos o .lean() para transformar o retorno em objetos JavaScript puros de alta velocidade.
+        const dadosBrutos = await DisciplinaModel.find(condicao).lean();
         
-        console.log(`[DIAGNÓSTICO BACKEND] Itens encontrados na coleção '${SEU_NOME_COLECAO_ATLAS}': ${disciplinas.length}`);
+        // MAPEAMENTO DE COMPATIBILIDADE: Garante que cada item devolvido possua tanto o campo _id quanto o campo id.
+        // Isso resolve o problema de a View não conseguir ler o identificador único!
+        const disciplinasFormatadas = dadosBrutos.map(d => ({
+            id: d._id.toString(), // Cria o .id estrito esperado pelo (disc.id === selecionadoId) da View
+            _id: d._id.toString(),
+            CodDisc: d.CodDisc,
+            DTini: d.DTini,
+            DTfim: d.DTfim,
+            N: d.N,
+            CargH: d.CargH,
+            Controle: d.Controle,
+            Obrig: d.Obrig,
+            MatProf: d.MatProf
+        }));
 
-        res.json(disciplinas);
+        console.log(`[DIAGNÓSTICO] Sucesso! Enviando ${disciplinasFormatadas.length} disciplinas para a View.`);
+        res.json(disciplinasFormatadas);
+
     } catch (err) {
-        console.error('Erro interno na rota de disciplinas:', err.message);
+        console.error('Erro crítico na rota de disciplinas:', err.message);
         res.status(500).json({ error: err.message });
     }
 });
+
 
 app.get('/api/disciplinas/:id', async (req, res) => {
     try {
