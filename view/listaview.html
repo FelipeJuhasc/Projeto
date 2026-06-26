@@ -463,14 +463,20 @@ async function editarDisciplina() {
     abrirModal('editar');
 }
 
-// NOVA FUNÇÃO: Alimenta o dropdown do formulário com os professores reais do banco
-async function alimentarDropdownProfessores() {
-    const selectElement = document.getElementById('modal-MatProf');
+        async function alimentarDropdownProfessores() {
+            const selectElement = document.getElementById('modal-MatProf');
+    
+         // Se o modal ainda não existir ou o ID estiver errado na tela, sai sem travar o resto do código
+    if (!selectElement) return;
+
     selectElement.innerHTML = '<option value="">Buscando professores no banco...</option>';
 
     try {
-        // Faz a requisição direta para a API de professores que criamos anteriormente no Render
         const res = await fetch('/api/professores');
+        
+        // Se a API de professores falhar por algum motivo, não quebra a tela de disciplinas
+        if (!res.ok) throw new Error("Falha na requisição HTTP de professores");
+        
         const todosProfessores = await res.json();
         
         if (!todosProfessores || todosProfessores.length === 0) {
@@ -481,15 +487,14 @@ async function alimentarDropdownProfessores() {
         let optionsHTML = '<option value="">-- Selecione o Professor Responsável --</option>';
         todosProfessores.forEach(p => {
             const idRealProf = p._id || p.id;
-            // Exibe o nome do professor e o RA (ID do MongoDB) de forma legível na mesma linha
             optionsHTML += `<option value="${idRealProf}">${p.nome} (RA/ID: ${idRealProf})</option>`;
         });
         
         selectElement.innerHTML = optionsHTML;
     } catch (err) {
-        console.error("Erro ao alimentar dropdown de professores na view de disciplinas:", err);
+        console.error("Erro ao alimentar dropdown de professores:", err);
         selectElement.innerHTML = '<option value="">Erro ao carregar lista de professores da API.</option>';
-    }
+         }
 }
 
 
@@ -519,9 +524,19 @@ async function alimentarDropdownProfessores() {
             URL.revokeObjectURL(url);
         }
 
+        // CORREÇÃO: Garante o carregamento em ordem sem travar a tela
         document.addEventListener('DOMContentLoaded', async () => {
-    await filtrarDisciplinas();
-});
+             try {
+        // 1. Alimenta o dropdown em segundo plano para o modal já ficar pronto
+           await alimentarDropdownProfessores();
+        } catch (e) {
+             console.warn("Dropdown de professores não pôde ser alimentado agora:", e);
+         }
+    
+    // 2. Chama a listagem das disciplinas do MongoDB de forma limpa
+             await filtrarDisciplinas();
+        });
+
     </script>
 </body>
 </html>
