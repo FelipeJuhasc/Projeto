@@ -334,36 +334,46 @@ app.post('/api/cursos/:cursoId/vincular-disciplina', async (req, res) => {
         const { cursoId } = req.params;
         const { disciplinaId } = req.body;
 
-        if (!disciplinaId) {
-            return res.status(400).json({ success: false, message: 'ID da disciplina é obrigatório.' });
+        // 1. Validação obrigatória: Verifica se o ID do curso é um ObjectId válido do MongoDB
+        if (!mongoose.Types.ObjectId.isValid(cursoId)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: `O ID do curso (${cursoId}) é inválido. Certifique-se de selecionar um curso real cadastrado no MongoDB, e não um dado de teste antigo (como 1, 2 ou 3).` 
+            });
         }
 
-        // Busca o documento do curso na base de dados
+        // 2. Validação obrigatória: Verifica se o ID da disciplina é um ObjectId válido do MongoDB
+        if (!disciplinaId || !mongoose.Types.ObjectId.isValid(disciplinaId)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: `O ID da disciplina selecionada (${disciplinaId || 'vazio'}) é inválido ou não foi encontrado no MongoDB.` 
+            });
+        }
+
+        // 3. Busca o curso utilizando o modelo global
         const cursoExistente = await CursoModel.findById(cursoId);
         if (!cursoExistente) {
-            return res.status(404).json({ success: false, message: 'Curso não encontrado.' });
+            return res.status(404).json({ success: false, message: 'Curso não encontrado no banco de dados.' });
         }
 
-        // Inicializa o array caso ele não exista por conta de cadastros antigos do Atlas
         if (!cursoExistente.disciplinas) {
             cursoExistente.disciplinas = [];
         }
 
-        // Converte o ID recebido para o formato ObjectId do Mongoose
+        // Converte as strings validadas em ObjectIds para o Mongoose
         const oIdDisciplina = new mongoose.Types.ObjectId(disciplinaId);
 
-        // Verifica se o ID já consta no cronograma para evitar duplicidades
+        // Verifica se a disciplina já está no cronograma
         const jaExiste = cursoExistente.disciplinas.some(id => id.toString() === oIdDisciplina.toString());
-        
         if (jaExiste) {
-            return res.json({ success: true, message: 'Disciplina já cadastrada neste cronograma.' });
+            return res.json({ success: true, message: 'Esta disciplina já está cadastrada no cronograma deste curso.' });
         }
 
-        // Insere o identificador e commita na nuvem através do método save nativo
+        // Insere no array e salva o documento
         cursoExistente.disciplinas.push(oIdDisciplina);
         await cursoExistente.save();
 
-        // Retorna a estrutura populada usando o modelo devidamente registrado
+        // Retorna o objeto atualizado populando os dados reais
         const cursoAtualizado = await CursoModel.findById(cursoId).populate('disciplinas');
 
         res.json({ success: true, curso: cursoAtualizado });
@@ -372,6 +382,7 @@ app.post('/api/cursos/:cursoId/vincular-disciplina', async (req, res) => {
         res.status(500).json({ success: false, message: err.message });
     }
 });
+
 
 
 // Remove a discipline from a course timeline schedule
