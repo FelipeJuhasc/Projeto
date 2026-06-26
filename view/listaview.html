@@ -5,69 +5,132 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Disciplinas</title>
     <link rel="stylesheet" href="../index.css">
-    
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
         body { display: flex; min-height: 100vh; background: #f4f6f8; }
-
         .content { flex: 1; padding: 30px; }
         .content h1 { margin-bottom: 20px; color: #2c3e50; }
-        .content-section {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 1px 4px rgba(0,0,0,.1);
-        }
-
+        .content-section { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
         .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-        .toolbar input[type="text"] {
-            flex: 1;
-            min-width: 180px;
-            padding: 8px 12px;
-            font-size: 14px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            outline: none;
-        }
+        .toolbar input[type="text"] { flex: 1; min-width: 180px; padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; outline: none; }
         .toolbar input:focus { border-color: #2196F3; }
         .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
-
-        .btn {
-            padding: 8px 14px;
-            font-size: 14px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-        }
+        .btn { padding: 8px 14px; font-size: 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
         .btn-novo     { background: #4CAF50; color: white; }
         .btn-editar   { background: #2196F3; color: white; }
         .btn-excluir  { background: #f44336; color: white; }
         .btn-exportar { background: #FF9800; color: white; }
         .btn:hover    { opacity: .88; }
-        .btn:disabled {
-            background: #ccc;
-            color: #888;
-            cursor: not-allowed;
-            opacity: .7;
-        }
-
-        .disciplina-item {
-            padding: 12px 14px;
-            border-bottom: 1px solid #eee;
-            cursor: pointer;
-            border-radius: 4px;
-            border-left: 3px solid transparent;
-            transition: background .15s;
-        }
+        .btn:disabled { background: #ccc; color: #888; cursor: not-allowed; opacity: .7; }
+        .disciplina-item { padding: 12px 14px; border-bottom: 1px solid #eee; cursor: pointer; border-radius: 4px; border-left: 3px solid transparent; transition: background .15s; }
         .disciplina-item:hover       { background: #f5f5f5; }
         .disciplina-item.selecionado { background: #e8f0fe; border-left-color: #2196F3; }
-        .disciplina-item strong      { font-size: 15px; color: #333; }
-        .disciplina-item small       { color: #777; font-size: 13px; }
+        .disciplina-item strong { font-size: 15px; color: #333; }
+        .disciplina-item small  { color: #777; font-size: 13px; }
         .lista-vazia { color: #999; text-align: center; padding: 30px; }
+        .loading     { color: #aaa; text-align: center; padding: 20px; font-style: italic; }
+        .erro-lista  { color: #c0392b; text-align: center; padding: 20px; background: #fde8e8; border-radius: 6px; }
     </style>
-        <!-- INICIALIZAÇÃO PREVENTIVA DE MODELOS E ROUTER -->
+</head>
+<body>
+
+    <div class="sidebar" id="sidebar">
+        <h2 style="color: white; padding: 20px;">Unoeste</h2>
+        <ul>
+            <li><a href="./professor.html"   class="menu-item"><span>Professor</span></a></li>
+            <li><a href="./cursoView.html"   class="menu-item"><span>Cursos</span></a></li>
+            <li><a href="./listaview.html"   class="menu-item"><span>Disciplina</span></a></li>
+            <li><a href="./usuarioView.html" class="menu-item"><span>Usuários</span></a></li>
+            <li><a href="#" class="menu-item" onclick="logout()"><span>🚪 Sair</span></a></li>
+        </ul>
+    </div>
+
+    <div class="content">
+        <h1>Lista de Disciplinas</h1>
+        <div class="content-section">
+
+            <!-- Filtro de datas -->
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap;">
+                <label style="font-size: 13px; color: #555;">De:</label>
+                <input type="date" id="filter-dt-ini" onchange="filtrarDisciplinas()"
+                       style="padding: 6px 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px;" />
+                <label style="font-size: 13px; color: #555;">Até:</label>
+                <input type="date" id="filter-dt-fim" onchange="filtrarDisciplinas()"
+                       style="padding: 6px 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px;" />
+            </div>
+
+            <div class="toolbar">
+                <!-- CORREÇÃO: era filtrarDisciplinaes (typo), agora filtrarDisciplinas -->
+                <input type="text" id="search-input"
+                       placeholder="Buscar disciplina pelo código..."
+                       oninput="filtrarDisciplinas()" />
+                <div class="btn-group">
+                    <button class="btn btn-novo"     onclick="novoDisciplina()">+ Novo</button>
+                    <button class="btn btn-editar"   onclick="editarDisciplina()"  id="btn-editar"  disabled>Editar</button>
+                    <button class="btn btn-excluir"  onclick="excluirDisciplina()" id="btn-excluir" disabled>Excluir</button>
+                    <button class="btn btn-exportar" onclick="exportarTXT()">⬇ Exportar TXT</button>
+                </div>
+            </div>
+
+            <div id="disciplina-list"><p class="loading">Carregando disciplinas...</p></div>
+        </div>
+    </div>
+
+    <!-- MODAL -->
+    <div id="disciplina-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+        <div style="background:white; padding:25px; border-radius:8px; width:100%; max-width:450px; box-shadow:0 4px 15px rgba(0,0,0,.2); max-height:90vh; overflow-y:auto;">
+            <h2 id="modal-title" style="margin-bottom:20px; color:#2c3e50;">Adicionar Disciplina</h2>
+
+            <div style="margin-bottom:12px;">
+                <label style="display:block; margin-bottom:3px; font-weight:500;">Código da Disciplina:</label>
+                <input type="text" id="modal-CodDisc" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+            </div>
+            <div style="display:flex; gap:10px; margin-bottom:12px;">
+                <div style="flex:1;">
+                    <label style="display:block; margin-bottom:3px; font-weight:500;">Data Início:</label>
+                    <input type="date" id="modal-DTini" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                </div>
+                <div style="flex:1;">
+                    <label style="display:block; margin-bottom:3px; font-weight:500;">Data Fim:</label>
+                    <input type="date" id="modal-DTfim" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                </div>
+            </div>
+            <div style="display:flex; gap:10px; margin-bottom:12px;">
+                <div style="flex:1;">
+                    <label style="display:block; margin-bottom:3px; font-weight:500;">Turma (N):</label>
+                    <input type="number" id="modal-N" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                </div>
+                <div style="flex:1;">
+                    <label style="display:block; margin-bottom:3px; font-weight:500;">Carga Horária (h):</label>
+                    <input type="number" id="modal-CargH" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                </div>
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="display:block; margin-bottom:3px; font-weight:500;">Código de Controle:</label>
+                <input type="text" id="modal-Controle" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+            </div>
+            <div style="margin-bottom:15px;">
+                <label style="display:block; margin-bottom:3px; font-weight:500;">Professor Responsável:</label>
+                <select id="modal-MatProf" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; background:white; font-size:14px;">
+                    <option value="">Carregando professores...</option>
+                </select>
+            </div>
+            <div style="margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+                <input type="checkbox" id="modal-Obrig" checked style="width:auto;">
+                <label for="modal-Obrig" style="font-weight:500;">Disciplina Obrigatória</label>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn" style="background:#e0e0e0; color:#333;" onclick="fecharModal()">Cancelar</button>
+                <!-- CORREÇÃO: função salvarFormularioModal agora existe -->
+                <button class="btn btn-novo" id="btn-salvar-modal" onclick="salvarFormularioModal()">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         1) ROUTER
+    ══════════════════════════════════════════════ -->
     <script>
         class Router {
             constructor() { this._rotas = {}; }
@@ -78,23 +141,24 @@
                 return await fn(dados);
             }
         }
-        // Registra o roteador global imediatamente na abertura da página
-        if (!window.router) {
-            window.router = new Router();
-        }
+        window.router = new Router();
+    </script>
 
-        // Classe Disciplina Global
+    <!-- ══════════════════════════════════════════════
+         2) MODEL
+    ══════════════════════════════════════════════ -->
+    <script>
         class Disciplina {
             constructor(id, CodDisc, DTini, DTfim, N, CargH, Controle, Obrig, MatProf) {
-                this._id = id;
-                this._CodDisc = CodDisc;
-                this._DTini = DTini;
-                this._DTfim = DTfim;
-                this._N = Number(N);
-                this._CargH = Number(CargH);
+                this._id       = id;
+                this._CodDisc  = CodDisc;
+                this._DTini    = DTini;
+                this._DTfim    = DTfim;
+                this._N        = Number(N);
+                this._CargH    = Number(CargH);
                 this._Controle = Controle;
-                this._Obrig = !!Obrig;
-                this._MatProf = MatProf;
+                this._Obrig    = !!Obrig;
+                this._MatProf  = MatProf;
             }
             get id()       { return this._id; }
             get CodDisc()  { return this._CodDisc; }
@@ -108,236 +172,83 @@
         }
         window.Disciplina = Disciplina;
     </script>
-</head>
 
-</head>
-<body>
+    <!-- ══════════════════════════════════════════════
+         3) DisciplinaController.js (externo)
+         — registra as rotas no router antes do DOMContentLoaded
+    ══════════════════════════════════════════════ -->
+    <script src="/controller/DisciplinaController.js?v=2.0.5"></script>
 
-    <div class="sidebar" id="sidebar">
-        <h2 style="color: white; padding: 20px;">Unoeste</h2>
-        <ul>
-            <li><a href="./professor.html"  class="menu-item"><span onclick="toprofessor()">Professor</span></a></li>
-            <li><a href="./cursoView.html"  class="menu-item"><span onclick="toCurso()">Cursos</span></a></li>
-            <li><a href="./listaview.html"  class="menu-item"><span onclick="toLista()">Disciplina</span></a></li>
-            <li><a href="./usuarioView.html" class="menu-item"><span onclick="toUsuario()">Usuários</span></a></li>
-            <li ><a href="#" class="menu-item" onclick="logout()"><span>🚪 Sair (Logout)</span></a></li>
-        </ul>
-    </div>
-
-    <div class="content">
-        <h1>Lista de Disciplinas</h1>
-        <div class="content-section">
-        <div style="display: flex; gap: 8px; align-items: center; min-width: 300px;">
-            <label style="font-size: 13px; color: #555;">De:</label>
-            <input type="date" id="filter-dt-ini" onchange="filtrarDisciplinas()" style="padding: 6px 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; outline: none;" />
-        
-            <label style="font-size: 13px; color: #555;">Até:</label>
-            <input type="date" id="filter-dt-fim" onchange="filtrarDisciplinas()" style="padding: 6px 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; outline: none;" />
-        </div>
-            <div class="toolbar">
-                <input type="text" id="search-input"
-                       placeholder="Buscar disciplina pelo nome..."
-                       oninput="filtrarDisciplinas()" />
-                <div class="btn-group">
-                    <button class="btn btn-novo"     onclick="novoDisciplina()">+ Novo</button>
-                    <button class="btn btn-editar"   onclick="editarDisciplina()"  id="btn-editar"  disabled>Editar</button>
-                    <button class="btn btn-excluir"  onclick="excluirDisciplina()" id="btn-excluir" disabled>Excluir</button>
-                    <button class="btn btn-exportar" onclick="exportarTXT()">⬇ Exportar TXT</button>
-                 </div>
-            </div>
-
-            <div id="disciplina-list"></div>
-        </div>
-    </div>
-    <!-- MODAL DE FORMULÁRIO PARA DISCIPLINA -->
-    <div id="disciplina-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
-     <div style="background: white; padding: 25px; border-radius: 8px; width: 100%; max-width: 450px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;">
-        <h2 id="modal-title" style="margin-bottom: 20px; color: #2c3e50;">Adicionar Disciplina</h2>
-        
-        <div style="margin-bottom: 12px;">
-            <label style="display: block; margin-bottom: 3px; font-weight: 500;">Código da Disciplina:</label>
-            <input type="text" id="modal-CodDisc" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
-        </div>
-
-        <div style="display: flex; gap: 10px; margin-bottom: 12px;">
-            <div style="flex: 1;">
-                <label style="display: block; margin-bottom: 3px; font-weight: 500;">Data Início:</label>
-                <input type="date" id="modal-DTini" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
-            </div>
-            <div style="flex: 1;">
-                <label style="display: block; margin-bottom: 3px; font-weight: 500;">Data Fim:</label>
-                <input type="date" id="modal-DTfim" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
-            </div>
-        </div>
-
-        <div style="display: flex; gap: 10px; margin-bottom: 12px;">
-            <div style="flex: 1;">
-                <label style="display: block; margin-bottom: 3px; font-weight: 500;">Turma (N):</label>
-                <input type="number" id="modal-N" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
-            </div>
-            <div style="flex: 1;">
-                <label style="display: block; margin-bottom: 3px; font-weight: 500;">Carga Horária (h):</label>
-                <input type="number" id="modal-CargH" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
-            </div>
-        </div>
-
-        <div style="margin-bottom: 12px;">
-            <label style="display: block; margin-bottom: 3px; font-weight: 500;">Código de Controle:</label>
-            <input type="text" id="modal-Controle" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
-        </div>
-
-        <div style="margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 3px; font-weight: 500;">Professor Responsável:</label>
-            <select id="modal-MatProf" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background: white; font-size: 14px;">
-              <option value="">Carregando professores disponíveis...</option>
-            </select>
-        </div>
-
-
-        <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
-            <input type="checkbox" id="modal-Obrig" checked style="width: auto;">
-            <label for="modal-Obrig" style="font-weight: 500;">Disciplina Obrigatória</label>
-        </div>
-
-        <div style="display: flex; justify-content: flex-end; gap: 10px;">
-            <button class="btn" style="background: #e0e0e0; color: #333;" onclick="fecharModal()">Cancelar</button>
-            <button class="btn btn-novo" id="btn-salvar-modal" onclick="salvarFormularioModal()">Salvar</button>
-        </div>
-     </div>
-    </div>
-        <!-- COMBINED APPLICATION SCRIPTS (ROUTER, MODEL, CONTROLLER, VIEW) -->
+    <!-- ══════════════════════════════════════════════
+         4) VIEW
+    ══════════════════════════════════════════════ -->
     <script>
-        
-        // ==========================================
-        // 1) ROUTER
-        // ==========================================
-        class Router {
-            constructor() { this._rotas = {}; }
-            registrar(rota, fn) { this._rotas[rota] = fn; }
-            async enviar(rota, dados) {
-                const fn = this._rotas[rota];
-                if (!fn) { console.error('[Router] Rota não encontrada:', rota); return null; }
-                return await fn(dados);
-            }
-        }
-        window.router = new Router();
-
-        // ==========================================
-        // 2) MODEL
-        // ==========================================
-        class Disciplina {
-            constructor(id, CodDisc, DTini, DTfim, N, CargH, Controle, Obrig, MatProf) {
-                this._id       = id;
-                this._CodDisc  = CodDisc;
-                this._DTini    = DTini;
-                this._DTfim    = DTfim;
-                this._N        = Number(N);
-                this._CargH    = Number(CargH);
-                this._Controle = Controle;
-                this._Obrig    = !!Obrig;
-                this._MatProf  = MatProf;
-            }
-            get id()        { return this._id; }
-            get CodDisc()   { return this._CodDisc; }
-            get DTini()     { return this._DTini; }
-            get DTfim()     { return this._DTfim; }
-            get N()         { return this._N; }
-            get CargH()     { return this._CargH; }
-            get Controle()  { return this._Controle; }
-            get Obrig()     { return this._Obrig; }
-            get MatProf()   { return this._MatProf; }
-        }
-        window.Disciplina = Disciplina;
-
-        // ==========================================
-        // 3) CONTROLLER
-        // ==========================================
-        
-
-        // ==========================================
-        // 4) VIEW
-        // ==========================================
         let selecionadoId = null;
-        let modoModal = 'adicionar';
+        let modoModal     = 'adicionar';
 
+        // ── Helpers de data ────────────────────────
         function formatarDataBR(dataIso) {
-            if (!dataIso) return '';
+            if (!dataIso) return 'N/A';
             const d = new Date(dataIso);
+            if (isNaN(d.getTime())) return 'Data inválida';
             return d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
         }
-
         function formatarDataInput(dataIso) {
             if (!dataIso) return '';
             return dataIso.split('T')[0];
         }
 
+        // ── Render ─────────────────────────────────
         async function renderDisciplinas(lista) {
-    const container = document.getElementById('disciplina-list');
-    container.innerHTML = '';
-    
-    if (!lista || lista.length === 0) {
-        container.innerHTML = '<p class="lista-vazia">Nenhuma disciplina encontrada.</p>';
-        return;
-    }
+            const container = document.getElementById('disciplina-list');
+            container.innerHTML = '';
 
-    // Armazena uma lista de contingência dos professores se o banco retornar apenas IDs soltos
-    let listaProfessoresCompleta = [];
-    try {
-        const resProf = await fetch('/api/professores');
-        listaProfessoresCompleta = await resProf.json();
-    } catch(e) {
-        console.warn("Não foi possível buscar contingência de professores:", e);
-    }
-
-    lista.forEach(disc => {
-        const div = document.createElement('div');
-        div.className = 'disciplina-item' + (disc.id === selecionadoId ? ' selecionado' : '');
-        
-        const tipoObrig = disc.Obrig ? 'Obrigatória' : 'Optativa';
-        const corObrig = disc.Obrig ? '#c0392b' : '#1a7a42';
-
-        // BLINDAGEM DE DATAS: Garante que se a data vier corrompida ou vazia, não trave a tela inteira
-        const dataInicioTexto = disc.DTini ? formatarDataBR(disc.DTini) : 'Data não informada';
-        const dataFimTexto = disc.DTfim ? formatarDataBR(disc.DTfim) : 'Data não informada';
-
-        // RESOLUÇÃO DINÂMICA DO PROFESSOR:
-        // Se disc.MatProf for um objeto (populado), lê o nome. Se for o ID de 24 caracteres, cruza com a lista de contingência.
-        let nomeProfessorExibir = 'Não atribuído';
-        if (disc.MatProf) {
-            if (typeof disc.MatProf === 'object' && disc.MatProf.nome) {
-                nomeProfessorExibir = disc.MatProf.nome;
-            } else {
-                // É uma string de ID, localiza o nome correspondente na nossa lista carregada da API
-                const profAchado = listaProfessoresCompleta.find(p => (p._id || p.id) === disc.MatProf.toString());
-                nomeProfessorExibir = profAchado ? profAchado.nome : `ID: ${disc.MatProf}`;
+            if (!lista) {
+                container.innerHTML = '<p class="erro-lista">❌ Erro ao carregar disciplinas. Verifique se o servidor está rodando.</p>';
+                return;
             }
+            if (lista.length === 0) {
+                container.innerHTML = '<p class="lista-vazia">Nenhuma disciplina encontrada.</p>';
+                return;
+            }
+
+            // Carrega professores para exibir nome em vez de ID
+            let professores = [];
+            try {
+                const res = await fetch('/api/professores');
+                professores = await res.json();
+            } catch(e) { /* segue sem nomes */ }
+
+            lista.forEach(disc => {
+                const div = document.createElement('div');
+                div.className = 'disciplina-item' + (disc.id === selecionadoId ? ' selecionado' : '');
+
+                const tipoObrig = disc.Obrig ? 'Obrigatória' : 'Optativa';
+                const corObrig  = disc.Obrig ? '#c0392b' : '#1a7a42';
+
+                let nomeProf = 'Não atribuído';
+                if (disc.MatProf) {
+                    if (typeof disc.MatProf === 'object' && disc.MatProf.nome) {
+                        nomeProf = disc.MatProf.nome;
+                    } else {
+                        const p = professores.find(p => (p._id || p.id) === disc.MatProf.toString());
+                        nomeProf = p ? p.nome : `ID: ${disc.MatProf}`;
+                    }
+                }
+
+                div.innerHTML = `
+                    <strong>Código: ${disc.CodDisc || 'Sem Código'}</strong>
+                    <span style="font-size:11px; font-weight:bold; color:${corObrig}; margin-left:8px;">${tipoObrig}</span><br>
+                    <small>
+                        Período: ${formatarDataBR(disc.DTini)} até ${formatarDataBR(disc.DTfim)}<br>
+                        Turma: ${disc.N} | C.H.: ${disc.CargH}h | Controle: ${disc.Controle || 'N/A'}<br>
+                        <span style="color:#2c3e50; font-weight:500;">👨‍🏫 ${nomeProf}</span>
+                    </small>
+                `;
+                div.onclick = () => selecionarDisciplina(disc.id);
+                container.appendChild(div);
+            });
         }
-
-        div.innerHTML = `
-            <strong>Código: ${disc.CodDisc || 'Sem Código'}</strong> 
-            <span style="font-size:11px; font-weight:bold; color:${corObrig}; margin-left:8px;">${tipoObrig}</span>
-            <br><small>
-                Período: ${dataInicioTexto} até ${dataFimTexto} <br>
-                Turma (N): ${disc.N || 0} | C.H.: ${disc.CargH || 0}h | Controle: ${disc.Controle || 'N/A'} <br>
-                <span style="color: #2c3e50; font-weight: 500;">👨‍🏫 Professor Responsável: ${nomeProfessorExibir}</span>
-            </small>
-        `;
-        
-        div.onclick = () => selecionarDisciplina(disc.id);
-        container.appendChild(div);
-    });
-}
-        function formatarDataBR(dataIso) {
-            if (!dataIso) return 'Data inválida';
-    
-            const d = new Date(dataIso);
-             // Se o fuso horário ou string gerarem um objeto Date inválido (NaN), aborta sem travar o renderizador
-            if (isNaN(d.getTime())) {
-                 return 'Data inválida';
-            }
-    
-        return d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-    }
 
         function selecionarDisciplina(id) {
             selecionadoId = (selecionadoId === id) ? null : id;
@@ -346,29 +257,23 @@
         }
 
         function atualizarBotoes() {
-            const btnEditar = document.getElementById('btn-editar');
-            const btnExcluir = document.getElementById('btn-excluir');
-            
-            // CORREÇÃO: Verifica se os botões realmente existem nesta tela antes de aplicar propriedades
-            if (btnEditar && btnExcluir) {
-                const hab = selecionadoId !== null;
-                btnEditar.disabled  = !hab;
-                btnExcluir.disabled = !hab;
-            }
+            const hab = selecionadoId !== null;
+            document.getElementById('btn-editar').disabled  = !hab;
+            document.getElementById('btn-excluir').disabled = !hab;
         }
-
 
         async function filtrarDisciplinas() {
             const termo = document.getElementById('search-input').value;
             const dtIni = document.getElementById('filter-dt-ini').value;
             const dtFim = document.getElementById('filter-dt-fim').value;
 
-            // Dispara os dados estruturados de forma correta para a controller externa
+            document.getElementById('disciplina-list').innerHTML = '<p class="loading">Carregando...</p>';
+
             const lista = await router.enviar('disciplina/listar', { termo, dtIni, dtFim });
-            renderDisciplinas(lista);
+            await renderDisciplinas(lista);
         }
 
-        // --- FUNÇÕES DE CONTROLE DO MODAL ---
+        // ── Modal ──────────────────────────────────
         function abrirModal(modo) {
             modoModal = modo;
             document.getElementById('disciplina-modal').style.display = 'flex';
@@ -376,61 +281,43 @@
 
         function fecharModal() {
             document.getElementById('disciplina-modal').style.display = 'none';
-            document.getElementById('modal-CodDisc').value = '';
-            document.getElementById('modal-DTini').value = '';
-            document.getElementById('modal-DTfim').value = '';
-            document.getElementById('modal-N').value = '';
-            document.getElementById('modal-CargH').value = '';
-            document.getElementById('modal-Controle').value = '';
+            ['modal-CodDisc','modal-DTini','modal-DTfim','modal-N','modal-CargH','modal-Controle'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
             document.getElementById('modal-MatProf').value = '';
             document.getElementById('modal-Obrig').checked = true;
         }
 
-                // ==========================================
-        // DYNAMIC DROPDOWN & MODAL ACTION CONTROLLERS
-        // ==========================================
-
         async function alimentarDropdownProfessores() {
-            const selectElement = document.getElementById('modal-MatProf');
-            if (!selectElement) return;
-
-            selectElement.innerHTML = '<option value="">Buscando professores no banco...</option>';
-
+            const sel = document.getElementById('modal-MatProf');
+            sel.innerHTML = '<option value="">Buscando professores...</option>';
             try {
-                const res = await fetch('/api/professores');
-                if (!res.ok) throw new Error("Falha na requisição HTTP de professores");
-                
-                const todosProfessores = await res.json();
-                
-                if (!todosProfessores || todosProfessores.length === 0) {
-                    selectElement.innerHTML = '<option value="">Nenhum professor encontrado no sistema.</option>';
+                const res  = await fetch('/api/professores');
+                const list = await res.json();
+                if (!list || list.length === 0) {
+                    sel.innerHTML = '<option value="">Nenhum professor encontrado.</option>';
                     return;
                 }
-
-                let optionsHTML = '<option value="">-- Selecione o Professor Responsável --</option>';
-                todosProfessores.forEach(p => {
-                    const idRealProf = p._id || p.id;
-                    optionsHTML += `<option value="${idRealProf}">${p.nome} (RA/ID: ${idRealProf})</option>`;
+                sel.innerHTML = '<option value="">-- Selecione o Professor --</option>';
+                list.forEach(p => {
+                    const id = p._id || p.id;
+                    sel.innerHTML += `<option value="${id}">${p.nome}</option>`;
                 });
-                
-                selectElement.innerHTML = optionsHTML;
-            } catch (err) {
-                console.error("Erro ao alimentar dropdown de professores:", err);
-                selectElement.innerHTML = '<option value="">Erro ao carregar lista de professores da API.</option>';
+            } catch(err) {
+                sel.innerHTML = '<option value="">Erro ao carregar professores.</option>';
             }
         }
 
-        // DECLARAÇÃO ÚNICA: Abre o modal limpo para inserção de novas disciplinas
         function novoDisciplina() {
             const permissao = localStorage.getItem('usuarioPermissao');
             if (permissao === 'visao' || permissao === 'edicao') {
                 alert('Seu nível de acesso não permite adicionar disciplinas.');
                 return;
             }
-            document.getElementById('modal-title').innerText = "Adicionar Disciplina";
-            
+            document.getElementById('modal-title').innerText = 'Adicionar Disciplina';
+            fecharModal(); // limpa campos
             abrirModal('adicionar');
-            alimentarDropdownProfessores(); 
+            alimentarDropdownProfessores();
         }
 
         async function editarDisciplina() {
@@ -444,67 +331,109 @@
             const disc = await router.enviar('disciplina/buscarPorId', selecionadoId);
             if (!disc) return;
 
-            document.getElementById('modal-title').innerText = "Editar Disciplina";
-            document.getElementById('modal-CodDisc').value = disc.CodDisc;
-            document.getElementById('modal-DTini').value = formatarDataInput(disc.DTini);
-            document.getElementById('modal-DTfim').value = formatarDataInput(disc.DTfim);
-            document.getElementById('modal-N').value = disc.N;
-            document.getElementById('modal-CargH').value = disc.CargH;
-            document.getElementById('modal-Controle').value = disc.Controle;
-            document.getElementById('modal-Obrig').checked = disc.Obrig;
+            document.getElementById('modal-title').innerText    = 'Editar Disciplina';
+            document.getElementById('modal-CodDisc').value      = disc.CodDisc;
+            document.getElementById('modal-DTini').value        = formatarDataInput(disc.DTini);
+            document.getElementById('modal-DTfim').value        = formatarDataInput(disc.DTfim);
+            document.getElementById('modal-N').value            = disc.N;
+            document.getElementById('modal-CargH').value        = disc.CargH;
+            document.getElementById('modal-Controle').value     = disc.Controle;
+            document.getElementById('modal-Obrig').checked      = disc.Obrig;
 
-            // 1. Primeiro carrega a lista completa de opções vindas da API de professores
             await alimentarDropdownProfessores();
-            
-            // 2. Depois trava a seleção exatamente na matrícula que já estava salva neste documento
             document.getElementById('modal-MatProf').value = disc.MatProf;
 
             abrirModal('editar');
         }
 
+        async function excluirDisciplina() {
+            const permissao = localStorage.getItem('usuarioPermissao');
+            if (permissao === 'visao' || permissao === 'edicao') {
+                alert('Seu nível de acesso não permite excluir disciplinas.');
+                return;
+            }
+            if (!selecionadoId) return;
 
-        async function exportarTXT() {
-            const termo = document.getElementById('search-input').value;
-            const lista = await router.enviar('disciplina/listar', termo);
+            const disc = await router.enviar('disciplina/buscarPorId', selecionadoId);
+            if (!disc) return;
 
-            if (!lista || lista.length === 0) {
-                alert('Nenhuma disciplina para exportar.');
+            if (confirm(`Excluir a disciplina "${disc.CodDisc}"?`)) {
+                await router.enviar('disciplina/excluir', selecionadoId);
+                selecionadoId = null;
+                atualizarBotoes();
+                await filtrarDisciplinas();
+            }
+        }
+
+        // ── CORREÇÃO PRINCIPAL: função estava faltando ──
+        async function salvarFormularioModal() {
+            const CodDisc  = document.getElementById('modal-CodDisc').value.trim();
+            const DTini    = document.getElementById('modal-DTini').value;
+            const DTfim    = document.getElementById('modal-DTfim').value;
+            const N        = document.getElementById('modal-N').value;
+            const CargH    = document.getElementById('modal-CargH').value;
+            const Controle = document.getElementById('modal-Controle').value.trim();
+            const MatProf  = document.getElementById('modal-MatProf').value;
+            const Obrig    = document.getElementById('modal-Obrig').checked;
+
+            if (!CodDisc || !DTini || !DTfim || !N || !CargH || !Controle) {
+                alert('Preencha todos os campos obrigatórios!');
                 return;
             }
 
-            const linhas = [
-                'ID\tCódigo\tInício\tTérmino\tTurma\tC.H.\tControle\tObrigatoriedade\tMatrícula Prof',
-                ...lista.map(d => `${d.id}\t${d.CodDisc}\t${formatarDataBR(d.DTini)}\t${formatarDataBR(d.DTfim)}\t${d.N}\t${d.CargH}\t${d.Controle}\t${d.Obrig ? 'Obrigatória' : 'Optativa'}\t${d.MatProf}`)
-            ];
+            const dados = { CodDisc, DTini, DTfim, N: Number(N), CargH: Number(CargH), Controle, Obrig, MatProf };
 
-            const conteudo = linhas.join('\r\n');
-            const blob = new Blob([conteudo], { type: 'text/plain;charset=utf-8' });
-            const url  = URL.createObjectURL(blob);
-            const a    = document.createElement('a');
+            const btnSalvar = document.getElementById('btn-salvar-modal');
+            btnSalvar.disabled = true;
+            btnSalvar.textContent = 'Salvando...';
 
-            const dataHoje = new Date().toISOString().slice(0, 10);
-            a.href     = url;
-            a.download = `disciplinas_${dataHoje}.txt`;
-            a.click();
-            URL.revokeObjectURL(url);
+            try {
+                if (modoModal === 'adicionar') {
+                    await router.enviar('disciplina/adicionar', dados);
+                    alert('Disciplina adicionada com sucesso!');
+                } else {
+                    await router.enviar('disciplina/atualizar', { id: selecionadoId, dados });
+                    alert('Disciplina atualizada com sucesso!');
+                    selecionadoId = null;
+                    atualizarBotoes();
+                }
+                fecharModal();
+                await filtrarDisciplinas();
+            } catch(err) {
+                alert('Erro ao salvar: ' + err.message);
+            } finally {
+                btnSalvar.disabled = false;
+                btnSalvar.textContent = 'Salvar';
+            }
         }
 
-                // Garanta que a sua inicialização ao abrir a página esteja exatamente assim:
-        // No final do seu controleAcesso.js, certifique-se de que tenha apenas isso:
+        async function exportarTXT() {
+            const termo = document.getElementById('search-input').value;
+            const dtIni = document.getElementById('filter-dt-ini').value;
+            const dtFim = document.getElementById('filter-dt-fim').value;
+            const lista = await router.enviar('disciplina/listar', { termo, dtIni, dtFim });
+
+            if (!lista || lista.length === 0) { alert('Nenhuma disciplina para exportar.'); return; }
+
+            const linhas = [
+                'Código\tInício\tTérmino\tTurma\tC.H.\tControle\tObrigatoriedade',
+                ...lista.map(d =>
+                    `${d.CodDisc}\t${formatarDataBR(d.DTini)}\t${formatarDataBR(d.DTfim)}\t${d.N}\t${d.CargH}\t${d.Controle}\t${d.Obrig ? 'Obrigatória' : 'Optativa'}`
+                )
+            ];
+            const blob = new Blob([linhas.join('\r\n')], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `disciplinas_${new Date().toISOString().slice(0, 10)}.txt`;
+            a.click();
+        }
+
+        // DOMContentLoaded — DisciplinaController.js já executou aqui
         document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                await alimentarDropdownProfessores();
-            } catch (e) {
-                console.warn("Dropdown pendente:", e);
-            }
-            // Chama a busca do MongoDB Atlas na nuvem automaticamente
             await filtrarDisciplinas();
         });
-
-
-
     </script>
-    <script src="/controller/DisciplinaController.js?v=2.0.5"></script>
+
     <script src="/view/controleAcesso.js"></script>
 </body>
 </html>
