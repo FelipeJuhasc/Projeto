@@ -218,7 +218,7 @@ const DisciplinaSchema = new mongoose.Schema({
 });
 
 // CERTIFIQUE-SE: Mude para 'disciplina' se a sua coleção no Atlas não tiver o 'n' extra!
-const SEU_NOME_COLECAO_ATLAS = 'discinplina'; 
+const SEU_NOME_COLECAO_ATLAS = 'disciplina'; 
 const DisciplinaModel = mongoose.model('Disciplina', DisciplinaSchema, SEU_NOME_COLECAO_ATLAS);
 
 // =================================================================
