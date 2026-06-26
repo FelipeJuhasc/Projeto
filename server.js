@@ -183,25 +183,6 @@ app.delete('/api/professores/:id', async (req, res) => {
 }
 
 {
-    // =================================================================
-// SCHEMA E MODELO DE DISCIPLINA
-// =================================================================
-const DisciplinaSchema = new mongoose.Schema({
-    CodDisc:  { type: String, required: true },
-    DTini:    { type: Date, required: true },
-    DTfim:    { type: Date, required: true },
-    N:        { type: Number, required: true },
-    CargH:    { type: Number, required: true },
-    Controle: { type: String, required: true },
-    Obrig:    { type: Boolean, default: true },
-    MatProf:  { type: String, required: true },
-        // Nova estrutura para permitir ordenação, edição e status de fixo por curso
-    
-
-});
-
-// Força o Mongoose a usar a coleção exatamente com a grafia da sua imagem: 'disciplina'
-const DisciplinaModel = mongoose.model('Disciplina', DisciplinaSchema, 'disciplina');
 
 // =================================================================
 // SCHEMA E MODELO DE DISCIPLINA
@@ -218,8 +199,9 @@ const DisciplinaSchema = new mongoose.Schema({
 });
 
 // CERTIFIQUE-SE: Mude para 'disciplina' se a sua coleção no Atlas não tiver o 'n' extra!
-const SEU_NOME_COLECAO_ATLAS = 'disciplina'; 
+const SEU_NOME_COLECAO_ATLAS = 'discinplina'; 
 const DisciplinaModel = mongoose.model('Disciplina', DisciplinaSchema, SEU_NOME_COLECAO_ATLAS);
+
 
 // =================================================================
 // ROTAS DA API PARA DISCIPLINA
