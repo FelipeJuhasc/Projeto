@@ -14,6 +14,69 @@ app.use(cors({
 }));
 app.use(express.json()); 
 
+const cron = require('node-cron');
+
+// 1. FUNÇÃO GLOBAL QUE VARRE E ROTACIONA TODOS OS CURSOS AUTOMATICAMENTE
+async function executarRotacaoAutomaticaMensal() {
+    console.log(`[AUTOMAÇÃO REAL] ${new Date().toISOString()} - Iniciando rotação mensal automática de cronogramas...`);
+    try {
+        const cursos = await CursoModel.find({});
+        
+        for (let curso of cursos) {
+            if (!curso.disciplinas || curso.disciplinas.length <= 1) continue;
+
+            const posicoesFixas = curso.disciplinas.filter(d => d.fixa).map(d => d.ordem);
+            const totalDisciplinas = curso.disciplinas.length;
+            let naoFixas = curso.disciplinas.filter(d => !d.fixa);
+
+            naoFixas.forEach(d => {
+                let novaOrdem = d.ordem - 1;
+                if (novaOrdem < 1) novaOrdem = totalDisciplinas;
+                d.ordem = novaOrdem;
+            });
+
+            let houveColisao;
+            do {
+                houveColisao = false;
+                naoFixas.forEach(d => {
+                    if (posicoesFixas.includes(d.ordem)) {
+                        d.ordem = d.ordem - 1;
+                        if (d.ordem < 1) d.ordem = totalDisciplinas;
+                        houveColisao = true;
+                    }
+                });
+            } while (houveColisao);
+
+            const todasAtualizadas = [
+                ...curso.disciplinas.filter(d => d.fixa),
+                ...naoFixas
+            ];
+
+            todasAtualizadas.sort((a, b) => a.ordem - b.ordem);
+            
+            let ordemEsperada = 1;
+            todasAtualizadas.forEach(d => {
+                d.ordem = ordemEsperada++;
+            });
+
+            curso.disciplinas = todasAtualizadas;
+            await curso.save();
+            console.log(`[AUTOMAÇÃO] Curso ID ${curso._id} rotacionado com sucesso via calendário real.`);
+        }
+        console.log("[AUTOMAÇÃO REAL] Todos os cronogramas foram atualizados para o novo mês.");
+    } catch (err) {
+        console.error("[ERRO CRÍTICO AUTOMAÇÃO]:", err.message);
+    }
+}
+
+// 2. AGENDADOR CRON (Padrão de tempo: Minuto Hora DiaDoMês Mês DiaDaSemana)
+// A expressão '1 0 1 * *' significa: Todo dia 1º de cada mês, às 00:01 da manhã
+cron.schedule('1 0 1 * *', async () => {
+    await executarRotacaoAutomaticaMensal();
+}, {
+    scheduled: true,
+    timezone: "America/Sao_Paulo" // Força o fuso horário correto do Brasil
+});
 
 
 // =================================================================
