@@ -317,7 +317,11 @@
                 router.registrar('curso/excluir',     async (id)      => await this.excluir(id));
             }
 
-            async function getAll(filtros = '') {
+        }
+
+// Altere também o método getAll dentro da sua CursoController para montar a URL com os novos parâmetros
+// (Caso sua CursoController esteja em arquivo separado ou colada no próprio HTML, ajuste este método):
+async function getAll(filtros = '') {
     try {
         let termo = '';
         let dtIni = '';
@@ -475,14 +479,13 @@
 
 
         async function filtrarCursos() {
-    const termo = document.getElementById('search-input')?.value || '';
+    const termo = document.getElementById('search-input').value.trim();
     const dtIni = document.getElementById('filter-curso-ini').value;
     const dtFim = document.getElementById('filter-curso-fim').value;
 
-    console.log("[DEBUG CURSOS] Disparando busca com filtros de data...");
+    const filtros = { termo, dtIni, dtFim };
     
-    // Envia o objeto estruturado com texto e datas pelo Router
-    const lista = await router.enviar('curso/listar', { termo, dtIni, dtFim });
+    const lista = await router.enviar('curso/listar', filtros);
     renderCursos(lista);
 }
 
