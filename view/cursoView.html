@@ -85,7 +85,13 @@
     <div class="content">
         <h1>Lista de Cursos</h1>
         <div class="content-section">
-
+                <div style="display: flex; gap: 8px; align-items: center; min-width: 300px; margin: 0 10px;">
+    <label style="font-size: 13px; color: #555; font-weight: bold;">De:</label>
+    <input type="date" id="filter-curso-ini" onchange="filtrarCursos()" style="padding: 6px 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; outline: none; background: white;" />
+    
+    <label style="font-size: 13px; color: #555; font-weight: bold;">Até:</label>
+    <input type="date" id="filter-curso-fim" onchange="filtrarCursos()" style="padding: 6px 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; outline: none; background: white;" />
+</div>
             <div class="toolbar">
                 <input type="text" id="search-input"
                        placeholder="Buscar curso pelo nome..."
@@ -311,21 +317,38 @@
                 router.registrar('curso/excluir',     async (id)      => await this.excluir(id));
             }
 
-            async getAll(termo = '') {
-                try {
-                    const url = termo ? `${this._apiUrl}?termo=${termo}` : this._apiUrl;
-                    const res = await fetch(url);
-                    const data = await res.json();
-                    return data.map(c => new Curso(
-                        c._id, c.DTiniIncs, c.DTfimInsc, c.CargaH, c.CargaHTCC, 
-                        c.Codiesde, c.Gradeiesde, c.CursoInst, c.IniImediato, 
-                        c.IniMat, c.FimMat, c.Matcoord, c.PasSeg
-                    ));
-                } catch (err) {
-                    console.error('Erro ao buscar cursos:', err);
-                    return [];
-                }
-            }
+            async function getAll(filtros = '') {
+    try {
+        let termo = '';
+        let dtIni = '';
+        let dtFim = '';
+
+        if (typeof filtros === 'object' && filtros !== null) {
+            termo = filtros.termo || '';
+            dtIni = filtros.dtIni || '';
+            dtFim = filtros.dtFim || '';
+        } else {
+            termo = filtros || '';
+        }
+
+        // Monta a URL concatenando os filtros de calendário de forma segura
+        let url = `${this._apiUrl}?termo=${encodeURIComponent(termo)}`;
+        if (dtIni && dtIni.trim() !== '') url += `&dtIni=${dtIni}`;
+        if (dtFim && dtFim.trim() !== '') url += `&dtFim=${dtFim}`;
+
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        // Retorna o mapeamento reconstrutivo da classe Curso
+        return data.map(c => new Curso(
+            c._id, c.CursoInst, c.DTiniIncs, c.DTfimInsc, c.CargaH, c.CargaHTCC, 
+            c.Codiesde, c.Gradeiesde, c.IniImediato, c.IniMat, c.FimMat, c.Matcoord, c.PasSeg
+        ));
+    } catch (err) {
+        console.error('Erro ao buscar cursos com filtro de datas:', err);
+        return [];
+    }
+}
 
             async buscarPorId(id) {
                 try {
@@ -452,10 +475,16 @@
 
 
         async function filtrarCursos() {
-            const termo = document.getElementById('search-input').value;
-            const lista = await router.enviar('curso/listar', termo);
-            renderCursos(lista);
-        }
+    const termo = document.getElementById('search-input')?.value || '';
+    const dtIni = document.getElementById('filter-curso-ini').value;
+    const dtFim = document.getElementById('filter-curso-fim').value;
+
+    console.log("[DEBUG CURSOS] Disparando busca com filtros de data...");
+    
+    // Envia o objeto estruturado com texto e datas pelo Router
+    const lista = await router.enviar('curso/listar', { termo, dtIni, dtFim });
+    renderCursos(lista);
+}
 
         // --- FUNÇÕES DE CONTROLE DO MODAL ---
         function abrirModal(modo) {

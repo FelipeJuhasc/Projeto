@@ -411,17 +411,69 @@ const CursoModel = mongoose.model('Curso', CursoSchema, 'curso');
 // =================================================================
 app.get('/api/cursos', async (req, res) => {
     try {
-        const termo = req.query.termo || '';
+        const { termo, dtIni, dtFim } = req.query;
         let condicao = {};
-        if (termo) {
-            condicao = { CursoInst: { $regex: termo, $options: 'i' } }; // Busca pelo nome da instituição/curso
+
+        // 1. Filtro textual por instituição ou nome do curso
+        if (termo && termo !== '[object Object]' && termo !== 'undefined') {
+            condicao.CursoInst = { $regex: termo, $options: 'i' };
         }
-        const cursos = await db.buscarWhere(CursoModel, condicao);
-        res.json(cursos);
+
+        // 2. Filtro lógico para cruzamento de período de calendário real
+        if ((dtIni && dtIni.trim() !== "" && dtIni !== "undefined") || 
+            (dtFim && dtFim.trim() !== "" && dtFim !== "undefined")) {
+            
+            condicao.$and = [];
+            
+            if (dtIni && dtIni.trim() !== "" && dtIni !== "undefined") {
+                const dateStart = new Date(dtIni);
+                if (!isNaN(dateStart)) {
+                    // O curso deve terminar as matrículas depois ou na data inicial escolhida
+                    condicao.$and.push({ FimMat: { $gte: dateStart } });
+                }
+            }
+            if (dtFim && dtFim.trim() !== "" && dtFim !== "undefined") {
+                const dateEnd = new Date(dtFim);
+                if (!isNaN(dateEnd)) {
+                    // O curso deve iniciar as matrículas antes ou na data final escolhida
+                    condicao.$and.push({ IniMat: { $lte: dateEnd } });
+                }
+            }
+            
+            if (condicao.$and.length === 0) delete condicao.$and;
+        }
+
+        console.log("[DIAGNÓSTICO CURSOS] Buscando no Mongo com a query:", JSON.stringify(condicao));
+
+        // Busca nativa utilizando populate nas disciplinas vinculadas ao cronograma
+        const cursos = await CursoModel.find(condicao).populate('disciplinas.disciplinaId').lean();
+        
+        // Mapeia garantindo o mapeamento de id/_id para a View ler sem quebras
+        const cursosFormatados = cursos.map(c => ({
+            id: c._id.toString(),
+            _id: c._id.toString(),
+            CursoInst: c.CursoInst,
+            DTiniIncs: c.DTiniIncs,
+            DTfimInsc: c.DTfimInsc,
+            CargaH: c.CargaH,
+            CargaHTCC: c.CargaHTCC,
+            Codiesde: c.Codiesde,
+            Gradeiesde: c.Gradeiesde,
+            IniImediato: c.IniImediato,
+            IniMat: c.IniMat,
+            FimMat: c.FimMat,
+            Matcoord: c.Matcoord,
+            PasSeg: c.PasSeg,
+            disciplinas: c.disciplinas
+        }));
+
+        res.json(cursosFormatados);
     } catch (err) {
+        console.error('Erro na rota de listagem de cursos filtrados:', err.message);
         res.status(500).json({ error: err.message });
     }
 });
+
 app.get('/api/cursos/:id', async (req, res) => {
     try {
         // Modificado para caminhar por dentro do novo array de objetos do Mongoose
